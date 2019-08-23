@@ -4,64 +4,52 @@
 // ./myprogram.exe
 
 #include <iostream>
+#include <fstream>
 #include <armadillo>
 #include <cmath>
+#include <iomanip>
+//#include <string>
 
 using namespace std;
 using namespace arma;
 
+// object for output files
+ofstream ofile;
+
 inline double f(double x){return 100.0*exp(-10.0*x);
 }
-inline double exact(double x) {return 1.0-(1-exp(-10))*x-exp(-10*x);}
+inline double exact(double x) {return 1.0-(1.0-exp(-10.0))*x-exp(-10.0*x);}
 
 int main(int argc, char* argv[])
-  //int argc, char** argv
+  //Function takes exponent as command line argument, i.e. n = 10^x, x given by user
   {
+    double n = pow(10.0, atof(argv[1]));
     //Defining matrices and constants
-    double n = atof(argv[1]);
-    //double n = 10;
-    //mat A(n-1,1);
-    //A.fill(-1);
-    //mat B(n,1);
-    //B.fill(2);
-    //mat C(n-1,1);
-    //C.fill(-1);
-    //mat F((n),1); //Array for computed values
-    //mat F2((n),1); //Array for exact values
     vec A = Col<double>(n-1);
     A.fill(-1);
     vec B = Col<double>(n);
     B.fill(2);
     vec C = Col<double>(n-1);
     C.fill(-1);
-    vec F = Col<double>(n);
-    //F.print();
-    vec F2 = Col<double>(n);
-    double h = 1/(n);
-    double hh = h*h;
-    //cout<<hh<<endl;
-    //return 1;
-    //Filling function value and exact solution matrices
+    vec F = Col<double>(n); //Computed function values
+    vec F2 = Col<double>(n); //Analytical function values
+    vec x = Col<double>(n); //X-vector for evaluation and plotting
+    double h = 1.0/(n+1);
+    double hh = h*h; //Precomputing h^2
+
+    //Filling source function and exact solution matrices
    for(int i=0; i<=n-1; i++){
-      double x = (i+1)*h;
-      //cout<<"X is: "<<x<<endl;
-      F(i) = hh*f(x);
-      F2(i) = exact(x);
+      x(i) = (i+1)*h;
+      F(i) = hh*f( x(i) );
+      F2(i) = exact( x(i) );
    }
-   //F.print();
-   //F2.print();
-   //return 1;
-   //Boundary conditions
-   //F(0) = 0
-   //F(n+2) = 0
-   //F2(0) = exact(0)
-   //F2(n+2) = exact(1)
+
    //Forward substitution
-  for(int j=1; j<=n-1; j++){
+  for(int j=1; j<=(n-1); j++){
       B(j) = B(j) - A(j-1)*C(j-1)/B(j-1);
       F(j) = F(j) - A(j-1)*F(j-1)/B(j-1);
    }
-   //cout << "This is ok 1."<<endl;
+
    //Normalizing diagonal
   for(int k=0; k<=n-2; k++){
        F(k) = F(k)/B(k);
@@ -69,17 +57,32 @@ int main(int argc, char* argv[])
     }
     //Normalizing last row
     F(n-1) = F(n-1)/B(n-1);
+    B.fill(1.0);
 
-    //cout << "This is ok 2."<<endl;
     //Backwards substitution
   for(int k=(n-1); k>=1; k--){
-       F(k-1) = ( F(k-1) - C(k-1)*F(k) ) / B(k-1);
+       F(k-1) = ( F(k-1) - C(k-1)*F(k) )/B(k-1);
     }
-    //cout << "This is ok 3."<<endl;
-    //Printing matrices for comparison
-    //cout<<"Computed: "<<F<<endl;
-    //cout<<"Exact: "<<F2<<endl;
-    double mean_error = mean(abs(F2-F)); // /n;
-    cout<<"Error: " << mean_error <<endl;
+    //Writing to text file and giving n as title
+    ofstream myfile;
+    int name = int(n);
+    myfile.open(to_string(name));
+
+    //myfile << setw(15) << "x" ;
+    //myfile << setw(15) << "Computed values" ;
+    //myfile << setw(15) << "Exact values" ;
+    //myfile << setw(15) << "Relative error" << "\n";
+
+      for (int i = 0; i <= n-1; i++) {
+	  //double xval = x[i];
+ 	  double RelativeError = fabs((F2(i)-F(i))/F2(i));
+      myfile << setw(15) << setprecision(8) << x(i);
+      myfile << setw(15) << setprecision(8) << F(i);
+      myfile << setw(15) << setprecision(8) << F2(i);
+      myfile << setw(15) << setprecision(8) << RelativeError << "\n";
+      }
+      myfile.close();
+      //delete [] x; delete [] A; delete [] B; delete [] C; delete [] F; delete [] F;
   return 0;
 }
+//Dynamic memory allocation, pointers?
