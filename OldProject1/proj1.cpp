@@ -1,3 +1,5 @@
+// my first program in C++
+
 //c++ -o myprogram.exe  myprogram.cpp -larmadillo
 // ./myprogram.exe
 
@@ -6,7 +8,7 @@
 #include <armadillo>
 #include <cmath>
 #include <iomanip>
-#include <string>
+//#include <string>
 
 using namespace std;
 using namespace arma;
@@ -74,14 +76,10 @@ int main(int argc, char* argv[])
       for (int i = 0; i <= n-1; i++) {
 	  //double xval = x[i];
  	  double RelativeError = fabs((F2(i)-F(i))/F2(i));
-      //myfile << setw(15) << setprecision(8) << x(i);
-      //myfile << setw(15) << setprecision(8) << F(i);
-      //myfile << setw(15) << setprecision(8) << F2(i);
-      //myfile << setw(15) << setprecision(8) << RelativeError << "\n";
-      myfile << setprecision(8) << x(i) << ",";
-      myfile << setprecision(8) << F(i) << ",";
-      myfile << setprecision(8) << F2(i) << ",";
-      myfile << setprecision(8) << RelativeError << "\n";
+      myfile << setw(15) << setprecision(8) << x(i);
+      myfile << setw(15) << setprecision(8) << F(i);
+      myfile << setw(15) << setprecision(8) << F2(i);
+      myfile << setw(15) << setprecision(8) << RelativeError << "\n";
       }
       myfile.close();
       //delete [] x; delete [] A; delete [] B; delete [] C; delete [] F; delete [] F;
