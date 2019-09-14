@@ -15,7 +15,6 @@
 using namespace std;
 ///using namespace arma;
 
-
 int* offdiagmax(arma::mat A, int n){
     int* pos = new int[2];
     double max = 0;
@@ -58,13 +57,11 @@ arma::mat CreateMatrix(int n){
     //Filling the last row
     A(n-1,n-1) = d;
     A(n-1,n-2) = a;
-    //cout << "Columns: " << A.n_cols << " Rows: " << A.n_rows << endl;
-    //cout << A << endl;
+
     return A;
 }
 
-
-std::tuple<arma::mat, arma::mat> Jacobi_Rotate(arma::mat A, arma::mat R, int k, int l, int n){
+std::tuple<arma::mat, arma::mat> Jacobi_Rotation(arma::mat A, arma::mat R, int k, int l, int n){
     double s;
     double c;
     if ( A(k,l) != 0.0 ){
@@ -101,7 +98,7 @@ std::tuple<arma::mat, arma::mat> Jacobi_Rotate(arma::mat A, arma::mat R, int k, 
     A(k,k) = c*c*a_kk - 2.0*c*s*A(k,l) + s*s*a_ll;
     A(l,l) = s*s*a_kk + 2.0*c*s*A(k,l) + c*c*a_ll;
     A(k,l) = 0.0; // hard-coding non-diagonal elements by hand
-    A(l,k) = 0.0; // same here
+    A(l,k) = 0.0; // ------------""--------------
     for(int i = 0; i < n; i++ ){
         if( i != k && i != l ) {
             a_ik = A(i,k);
@@ -120,52 +117,57 @@ std::tuple<arma::mat, arma::mat> Jacobi_Rotate(arma::mat A, arma::mat R, int k, 
     return std::make_tuple(A, R);
 }
 
-
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]){
+    //Reading dimensionality as command line argument
     int n = atoi(argv[1]);
-    //arma::mat R(n,n, arma::fill::zeros);
+
+    //Creating matrices A and R, A is filled through the create matrix function
     arma::mat A = CreateMatrix(n);
     arma::mat R = arma::mat(n,n,arma::fill::eye);
 
-    //A.print();
-
+    //Tolerance for accepting an element as zero
     double tolerance = 1.0E-10;
 
-    cout << tolerance << endl;
+    //Initializing counting variables for while loop
     int iterations = 0;
     double maxiter = 1.0E5;
     double maxnondiag = 1.0E8;
     while (fabs(maxnondiag) > tolerance && iterations <= maxiter){
 
+        //Getting indices of the largest offdiagonal element
         int* max_ind = offdiagmax(A,n);
         int p = max_ind[0];
         int q = max_ind[1];
+        //Assigning the value of the largest offdiagonal element
         maxnondiag = A(p,q);
 
-        //Jacobi_Rotate(A, R, p, q, n);
-        std::tie(A, R) = Jacobi_Rotate(A, R, p, q, n);
-        //cout << "One iteration!" << endl;
+        //Extracting the tuple returned from Jacobi_Rotate function
+        std::tie(A, R) = Jacobi_Rotation(A, R, p, q, n);
 
         iterations++;
     }
 
+    //Computing Armadillo eigenpairs for comparison
     arma::vec eigval;
     arma::mat eigvec;
 
     arma::eig_sym(eigval, eigvec, A);
 
-    cout << "This is A: "<< "\n" << endl;
+    cout << "This is D: "<< "\n" << endl;
     A.print();
 
     cout << "\n" <<"This is armadillo's eigenvalues: "<< "\n" << endl;
     eigval.print();
 
-    cout << "This is R: "<< "\n" << endl;
-    R.print();
+    // cout << "This is R: "<< "\n" << endl;
+    // R.print();
+    //
+    // cout << "\n" <<"This is armadillo's eigenvectors: "<< "\n" << endl;
+    // eigvec.print();
 
-    cout << "\n" <<"This is armadillo's eigenvectors: "<< "\n" << endl;
-    eigvec.print();
+    cout << "\n" <<"Dimension n: "<< n << endl;
+    cout <<"Number of iterations: "<< iterations << endl;
+    cout <<"Ratio iterations/n: "<< iterations/float(n) << endl;
 
     return 0;
 }
