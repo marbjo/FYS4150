@@ -12,6 +12,9 @@
 #include <ctime>
 #include <armadillo>
 
+#include <cstdlib>
+#include <ctime>
+
 using namespace std;
 ///using namespace arma;
 
@@ -150,54 +153,94 @@ std::tuple<arma::mat, arma::mat> Jacobi_Rotation(arma::mat A, arma::mat R, int k
 int main(int argc, char const *argv[]){
     //Reading dimensionality and rho_max as command line argument
     int n = atoi(argv[1]);
+
+    //Seeding for new random number every run
+    srand(time(NULL));
+
     //int rho_max = atoi(argv[2]);
 
-    int rho_max = 10;
     //Creating matrices A and R, A is filled through the create matrix function
 
     //Creating matrix for Buckling Beam
     //arma::mat A = CreateMatrix(n);
 
     //Creating matrix for quantum dots
-    arma::mat A = CreateMatrixQuantum(n,rho_max);
 
-    arma::mat R = arma::mat(n,n,arma::fill::eye);
 
-    //Tolerance for accepting an element as zero
-    double tolerance = 1.0E-10;
+    //Number of rhos tried
+    int rho_amount = 200;
 
-    //Initializing counting variables for while loop
-    int iterations = 0;
-    double maxiter = 1.0E5;
-    double maxnondiag = 1.0E8;
+    arma::mat err(rho_amount, n,arma::fill::zeros);
+    arma::vec rho_max_vec(rho_amount);
 
-    while (fabs(maxnondiag) > tolerance && iterations <= maxiter){
+    for(int i=0; i<rho_amount; i++){
+        //Looping over different values of rho, keeping dimensionality constant(cmd line arg)
 
-        //Getting indices of the largest offdiagonal element
-        int* max_ind = offdiagmax(A,n);
-        int p = max_ind[0];
-        int q = max_ind[1];
-        //Assigning the value of the largest offdiagonal element
-        maxnondiag = A(p,q);
+        //Setting rho_max and saving to a vector
+        double rho_max = (i+1)*10;
+        cout << rho_max << endl;
+        //int rho_max = ( rand() % 10 ) + 1;
+        rho_max_vec(i) = rho_max;
 
-        //Extracting the tuple returned from Jacobi_Rotate function
-        std::tie(A, R) = Jacobi_Rotation(A, R, p, q, n);
+        //Creating matrix A and R for diagonalization and storing of eigenvectors
+        arma::mat A = CreateMatrixQuantum(n,rho_max);
+        arma::mat R = arma::mat(n,n,arma::fill::eye);
 
-        iterations++;
-    }
+        //Armadillo eigenpairs for comparison
+        arma::vec eigval;
+        arma::mat eigvec;
+        arma::eig_sym(eigval, eigvec, A);
 
-    //Computing Armadillo eigenpairs for comparison
-    arma::vec eigval;
-    arma::mat eigvec;
+        //Tolerance for accepting an element as zero
+        double tolerance = 1.0E-10;
 
-    arma::eig_sym(eigval, eigvec, A);
+        //Initializing counting variables for while loop
+        int iterations = 0;
+        double maxiter = 1.0E5;
+        double maxnondiag = 1.0E8;
 
-    cout << "These are the first computed eigenvalues: "<< "\n" << endl;
-    cout << A(0,0) << "\n" << A(1,1) << "\n" << A(2,2) << "\n" << A(3,3) << "\n" << A(4,4) << "\n" << A(5,5) << endl;
+        //Running Jacobi rotation until all off diagonals are zero
+        while (fabs(maxnondiag) > tolerance && iterations <= maxiter){
 
-    //cout << "\n" <<"Dimension n: "<< n << endl;
-    cout <<"Number of iterations in Jacobi rotation: "<< iterations << endl;
-    //cout <<"Ratio iterations/n: "<< iterations/float(n) << endl;
+            //Getting indices of the largest offdiagonal element
+            int* max_ind = offdiagmax(A,n);
+            int p = max_ind[0];
+            int q = max_ind[1];
+            //Assigning the value of the largest offdiagonal element
+            maxnondiag = A(p,q);
 
+            //Extracting the tuple returned from Jacobi_Rotate function
+            std::tie(A, R) = Jacobi_Rotation(A, R, p, q, n);
+
+            iterations++;
+        }
+
+        for(int k=0; k<n; k++){
+            //Saving error in computed eigenvalues along each row
+            //I.E. err(0,0) is error in first eigenvalue, err(0,1) error in second eigenvalue
+            //Different rho values along the columns, I.E. err(0,:) is first rho value
+            //err(1,:) is second rho value etc.
+            //Ideally want the rho value which gives the least error for all eigenvalues
+            //(Which means the smallest sum over a row)
+            err(i,k) = fabs(A(k,k) - eigval(k));
+        }
+
+        //cout << "These are the first computed eigenvalues: "<< "\n" << endl;
+        //cout << A(0,0) << "\n" << A(1,1) << "\n" << A(2,2) << "\n" << A(3,3) << "\n" << A(4,4) << "\n" << A(5,5) << endl;
+
+        //cout << "\n" <<"Dimension n: "<< n << endl;
+        //cout <<"Number of iterations in Jacobi rotation: "<< iterations << endl;
+        //cout <<"Ratio iterations/n: "<< iterations/float(n) << endl;
+
+        //delete A
+        }
+
+    //err.print();
+    arma::vec error_sum(rho_amount,arma::fill::zeros);
+    for(int j=0; j<rho_amount; j++){
+        error_sum(j) = arma::sum( err.row(j) );
+    };
+    arma::uword min_ind = error_sum.index_min();
+    cout << "For n= "<< n << " the best rho is: " << rho_max_vec(min_ind) << endl;
     return 0;
 }
