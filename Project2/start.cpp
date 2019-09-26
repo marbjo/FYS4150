@@ -31,12 +31,12 @@ int* offdiagmax(arma::mat A, int n){
     return pos;
 }
 
-arma::mat CreateMatrix(int n){
+arma::mat CreateMatrix(int n, arma::mat A){
     //Function for setting up and filling tridiagonal matrix, with command line
     //argument n as dimensionality
 
-    int mat_size = n;
-    arma::mat A(mat_size,mat_size, arma::fill::zeros);
+    //int mat_size = n;
+    //arma::mat A(mat_size,mat_size, arma::fill::zeros);
 
     double h = 1. / double(n);
     double hh = h*h;
@@ -65,12 +65,12 @@ arma::mat CreateMatrix(int n){
     return A;
 }
 
-arma::mat CreateMatrixQuantum(int n,double rho_max){
+arma::mat CreateMatrixQuantum(int n,double rho_max, arma::mat A){
     //Function for setting up and filling tridiagonal matrix, with command line
     //argument n as dimensionality
 
-    int mat_size = n;
-    arma::mat A(mat_size,mat_size, arma::fill::zeros);
+    //int mat_size = n;
+    //arma::mat A(mat_size,mat_size, arma::fill::zeros);
 
     //double rho_max = 5;
 
@@ -98,12 +98,12 @@ arma::mat CreateMatrixQuantum(int n,double rho_max){
     return A;
 }
 
-arma::mat CreateMatrixQuantum2(int n,double rho_max, double omega){
+arma::mat CreateMatrixQuantum2(int n,double rho_max, double omega, arma::mat A){
     //Function for setting up and filling tridiagonal matrix, with command line
     //argument n as dimensionality
 
-    int mat_size = n;
-    arma::mat A(mat_size,mat_size, arma::fill::zeros);
+    //int mat_size = n;
+    //arma::mat A(mat_size,mat_size, arma::fill::zeros);
 
     double h = rho_max / double(n);
     double hh = h*h;
@@ -183,31 +183,46 @@ std::tuple<arma::mat, arma::mat> Jacobi_Rotation(arma::mat A, arma::mat R, int k
 }
 
 int main(int argc, char const *argv[]){
-    //Reading dimensionality, rho_max and omega as command line argument
+    //Reading dimensionality,omega and 0/1/2, whether you want buckling beam, one or two electrons respectively, as command line argument
+    if (argc < 4) {
+        cout << "Error: missing command line arguments. Must provide dimensionality n, omega and 0,1,2 for running Buckling Beam, one or two quantum dots respectively" << endl;
+        return 1;
+    }
+
     int n = atoi(argv[1]);
-    double rho_max = stod(argv[2]);
-    double omega = stod(argv[3]);
-    //int rho_max = 4.78 for n=100 is the best value;
+    double omega = stod(argv[2]);
+    int pot_check = atoi(argv[3]);
+    //double rho_max = stod(argv[3]);
+    double rho_max = 4.78;
 
-    //Creating matrices A and R, A is filled through the create matrix function
-
-    //Creating matrix for Buckling Beam
     //arma::mat A = CreateMatrix(n);
-
-    //Creating matrix for quantum dots
     //arma::mat A = CreateMatrixQuantum(n,rho_max);
-    //arma::mat R = arma::mat(n,n,arma::fill::eye);
+    //arma::mat A = CreateMatrixQuantum2(n,rho_max,omega);
 
-    //Creating matrix for two quantum dots
-    //double omega = 0.01;
-
-    arma::mat A = CreateMatrixQuantum2(n,rho_max,omega);
+    //Creating matrices A and R. A is filled through the create matrix function
+    arma::mat A(n,n, arma::fill::zeros);
     arma::mat R = arma::mat(n,n,arma::fill::eye);
+
+    if(pot_check == 0){
+        //Creating matrix for Buckling Beam
+        A = CreateMatrix(n,A);
+    }
+    else if(pot_check == 1){
+        //Creating matrix for quantum dots
+        A = CreateMatrixQuantum(n,rho_max,A);
+    }
+    else if(pot_check == 2){
+        //Creating matrix for two quantum dots
+        A = CreateMatrixQuantum2(n,rho_max,omega,A);
+    }
+    else{
+        cout << "Must give 0,1,2 to choose Buckling beam, one or two quantum dots" << endl;
+        return 0;
+    }
 
     //Computing Armadillo eigenpairs for comparison
     arma::vec eigval;
     arma::mat eigvec;
-
     arma::eig_sym(eigval, eigvec, A);
 
     //Tolerance for accepting an element as zero
@@ -233,7 +248,18 @@ int main(int argc, char const *argv[]){
         iterations++;
     }
 
-    string name = "R" + to_string(omega);
+    //Saving eigenvector matrix to file with appropriate name
+    //Coulomb interaction case will contain value for omega in name
+    string name;
+    if(pot_check == 0){
+        name = "R_buckling";
+    }
+    else if(pot_check == 1){
+        name = "R_quantum_dot";
+    }
+    else if(pot_check == 2){
+        name = "R_Coulomb_" + to_string(omega);
+    }
     R.save(name, arma::raw_ascii);
 
     //Extracting eigenvalues to a vector and sorting it
@@ -241,9 +267,23 @@ int main(int argc, char const *argv[]){
     for(int l=0; l<n; l++){
         eig_comp(l) = A(l,l);
     }
-    arma::vec eig_comp_sort = arma::sort(eig_comp);
 
+    //Finding index of first eigenvalue for usage in python plotting program
+    arma::uword min_ind = eig_comp.index_min();
+    cout << "Index of first eigenvalue is: " << "\n" <<endl;
+    cout << min_ind << endl;
+
+
+    //If writing min index to file, don't know if worth. Doesn't work currently, just overwrites.
+    // ofstream myfile;
+    // myfile.open ("indices.txt");
+    // myfile << min_ind << "\n";
+    // myfile.close();
+
+    arma::vec eig_comp_sort = arma::sort(eig_comp);
+    cout << eig_comp(16) << endl;
     //Computing error between computed and Armadillo eigvalues for first 4.
+    //This was basically done to find the best rho_max
     double err_tot = 0;
     for(int o=0; o<4; o++){
         err_tot = err_tot + fabs(eig_comp_sort(o) - double(3+o*4.));
