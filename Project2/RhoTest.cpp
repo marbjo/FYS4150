@@ -101,7 +101,7 @@ arma::mat CreateMatrixQuantum(int n,double rho_max){
     return A;
 }
 
-std::tuple<arma::mat, arma::mat> Jacobi_Rotation(arma::mat A, arma::mat R, int k, int l, int n){
+arma::mat Jacobi_Rotation(arma::mat A, int k, int l, int n){
     double s;
     double c;
     if ( A(k,l) != 0.0 ){
@@ -141,13 +141,14 @@ std::tuple<arma::mat, arma::mat> Jacobi_Rotation(arma::mat A, arma::mat R, int k
             A(i,l) = c*a_il + s*a_ik;
             A(l,i) = A(i,l);
         }
-        r_ik = R(i,k);
-        r_il = R(i,l);
+        //r_ik = R(i,k);
+        //r_il = R(i,l);
 
-        R(i,k) = c*r_ik - s*r_il;
-        R(i,l) = c*r_il + s*r_ik;
+        //R(i,k) = c*r_ik - s*r_il;
+        //R(i,l) = c*r_il + s*r_ik;
     }
-    return std::make_tuple(A, R);
+    //return std::make_tuple(A, R);
+    return A;
 }
 
 int main(int argc, char const *argv[]){
@@ -155,20 +156,9 @@ int main(int argc, char const *argv[]){
     int n = atoi(argv[1]);
 
     //Seeding for new random number every run
-    srand(time(NULL));
-
-    //int rho_max = atoi(argv[2]);
-
-    //Creating matrices A and R, A is filled through the create matrix function
-
-    //Creating matrix for Buckling Beam
-    //arma::mat A = CreateMatrix(n);
-
-    //Creating matrix for quantum dots
-
 
     //Number of rhos tried
-    int rho_amount = 200;
+    int rho_amount = 15;
 
     arma::mat err(rho_amount, n,arma::fill::zeros);
     arma::vec rho_max_vec(rho_amount);
@@ -177,14 +167,13 @@ int main(int argc, char const *argv[]){
         //Looping over different values of rho, keeping dimensionality constant(cmd line arg)
 
         //Setting rho_max and saving to a vector
-        double rho_max = (i+1)*10;
+        double rho_max = 3.5+0.1*i;
         cout << rho_max << endl;
         //int rho_max = ( rand() % 10 ) + 1;
         rho_max_vec(i) = rho_max;
 
         //Creating matrix A and R for diagonalization and storing of eigenvectors
         arma::mat A = CreateMatrixQuantum(n,rho_max);
-        arma::mat R = arma::mat(n,n,arma::fill::eye);
 
         //Armadillo eigenpairs for comparison
         arma::vec eigval;
@@ -210,19 +199,25 @@ int main(int argc, char const *argv[]){
             maxnondiag = A(p,q);
 
             //Extracting the tuple returned from Jacobi_Rotate function
-            std::tie(A, R) = Jacobi_Rotation(A, R, p, q, n);
-
+            //std::tie(A, R) = Jacobi_Rotation(A, R, p, q, n);
+            A = Jacobi_Rotation(A,p,q,n);
             iterations++;
         }
 
-        for(int k=0; k<n; k++){
+        arma::vec eig_comp(n);
+        for(int l=0; l<n; l++){
+            eig_comp(l) = A(l,l);
+        }
+        arma::vec eig_comp_sort = arma::sort(eig_comp);
+
+        for(int k=0; k<4; k++){
             //Saving error in computed eigenvalues along each row
             //I.E. err(0,0) is error in first eigenvalue, err(0,1) error in second eigenvalue
             //Different rho values along the columns, I.E. err(0,:) is first rho value
             //err(1,:) is second rho value etc.
             //Ideally want the rho value which gives the least error for all eigenvalues
             //(Which means the smallest sum over a row)
-            err(i,k) = fabs(A(k,k) - eigval(k));
+            err(i,k) = fabs(eig_comp_sort(k) - eigval(k));
         }
 
         //cout << "These are the first computed eigenvalues: "<< "\n" << endl;
@@ -236,8 +231,10 @@ int main(int argc, char const *argv[]){
         }
 
     //err.print();
-    arma::vec error_sum(rho_amount,arma::fill::zeros);
-    for(int j=0; j<rho_amount; j++){
+    //arma::vec error_sum(rho_amount,arma::fill::zeros);
+    arma::vec error_sum(4,arma::fill::zeros);
+    //for(int j=0; j<rho_amount; j++){
+    for(int j=0; j<4; j++){
         error_sum(j) = arma::sum( err.row(j) );
     };
     arma::uword min_ind = error_sum.index_min();

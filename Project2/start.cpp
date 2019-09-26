@@ -38,10 +38,10 @@ arma::mat CreateMatrix(int n){
     int mat_size = n;
     arma::mat A(mat_size,mat_size, arma::fill::zeros);
 
-    double h = 1. / n;
+    double h = 1. / double(n);
     double hh = h*h;
-    double d = 2/hh;
-    double a = -1/hh;
+    double d = 2./hh;
+    double a = -1./hh;
 
     //Filling first row
     A(0,0) = d;
@@ -74,10 +74,10 @@ arma::mat CreateMatrixQuantum(int n,double rho_max){
 
     //double rho_max = 5;
 
-    double h = rho_max / n;
+    double h = rho_max / double(n);
     double hh = h*h;
-    double d = 2/hh;
-    double a = -1/hh;
+    double d = 2./hh;
+    double a = -1./hh;
 
     //Filling first row
     A(0,0) = d + h*h;
@@ -98,7 +98,41 @@ arma::mat CreateMatrixQuantum(int n,double rho_max){
     return A;
 }
 
+arma::mat CreateMatrixQuantum2(int n,double rho_max, double omega){
+    //Function for setting up and filling tridiagonal matrix, with command line
+    //argument n as dimensionality
+
+    int mat_size = n;
+    arma::mat A(mat_size,mat_size, arma::fill::zeros);
+
+    double h = rho_max / double(n);
+    double hh = h*h;
+    double d = 2./hh;
+    double a = -1./hh;
+
+    //Filling first row
+
+    //rho_i = i*h
+    A(0,0) = d + omega*h*h + 1./(h);
+    A(0,1) = a;
+
+    //Filling the 3 diagonals
+    for(int i=1; i<=n-2; i++){
+       A(i,i) = d + omega * (i+1)*h * (i+1)*h + 1./((i+1)*h);
+
+       A(i,i-1) = a;
+       A(i,i+1) = a;
+    }
+
+    //Filling the last row
+    A(n-1,n-1) = d + omega * n*h * n*h + 1./(n*h);
+    A(n-1,n-2) = a;
+
+    return A;
+}
+
 std::tuple<arma::mat, arma::mat> Jacobi_Rotation(arma::mat A, arma::mat R, int k, int l, int n){
+//arma::mat Jacobi_Rotation(arma::mat A, int k, int l, int n){
     double s;
     double c;
     if ( A(k,l) != 0.0 ){
@@ -145,26 +179,39 @@ std::tuple<arma::mat, arma::mat> Jacobi_Rotation(arma::mat A, arma::mat R, int k
         R(i,l) = c*r_il + s*r_ik;
     }
     return std::make_tuple(A, R);
+    //return A;
 }
 
 int main(int argc, char const *argv[]){
-    //Reading dimensionality and rho_max as command line argument
+    //Reading dimensionality, rho_max and omega as command line argument
     int n = atoi(argv[1]);
-    //int rho_max = atoi(argv[2]);
+    double rho_max = stod(argv[2]);
+    double omega = stod(argv[3]);
+    //int rho_max = 4.78 for n=100 is the best value;
 
-    int rho_max = 10;
     //Creating matrices A and R, A is filled through the create matrix function
 
     //Creating matrix for Buckling Beam
     //arma::mat A = CreateMatrix(n);
 
     //Creating matrix for quantum dots
-    arma::mat A = CreateMatrixQuantum(n,rho_max);
+    //arma::mat A = CreateMatrixQuantum(n,rho_max);
+    //arma::mat R = arma::mat(n,n,arma::fill::eye);
 
+    //Creating matrix for two quantum dots
+    //double omega = 0.01;
+
+    arma::mat A = CreateMatrixQuantum2(n,rho_max,omega);
     arma::mat R = arma::mat(n,n,arma::fill::eye);
 
+    //Computing Armadillo eigenpairs for comparison
+    arma::vec eigval;
+    arma::mat eigvec;
+
+    arma::eig_sym(eigval, eigvec, A);
+
     //Tolerance for accepting an element as zero
-    double tolerance = 1.0E-10;
+    double tolerance = 1.0E-16;
 
     //Initializing counting variables for while loop
     int iterations = 0;
@@ -182,21 +229,36 @@ int main(int argc, char const *argv[]){
 
         //Extracting the tuple returned from Jacobi_Rotate function
         std::tie(A, R) = Jacobi_Rotation(A, R, p, q, n);
-
+        //A = Jacobi_Rotation(A,p,q,n);
         iterations++;
     }
 
-    //Computing Armadillo eigenpairs for comparison
-    arma::vec eigval;
-    arma::mat eigvec;
+    string name = "R" + to_string(omega);
+    R.save(name, arma::raw_ascii);
 
-    arma::eig_sym(eigval, eigvec, A);
+    //Extracting eigenvalues to a vector and sorting it
+    arma::vec eig_comp(n);
+    for(int l=0; l<n; l++){
+        eig_comp(l) = A(l,l);
+    }
+    arma::vec eig_comp_sort = arma::sort(eig_comp);
 
-    cout << "These are the first computed eigenvalues: "<< "\n" << endl;
-    cout << A(0,0) << "\n" << A(1,1) << "\n" << A(2,2) << "\n" << A(3,3) << "\n" << A(4,4) << "\n" << A(5,5) << endl;
+    //Computing error between computed and Armadillo eigvalues for first 4.
+    double err_tot = 0;
+    for(int o=0; o<4; o++){
+        err_tot = err_tot + fabs(eig_comp_sort(o) - double(3+o*4.));
+    }
+
+    //cout << "These are the first computed eigenvalues: "<< "\n" << endl;
+    //cout << A(0,0) << "\n" << A(1,1) << "\n" << A(2,2) << "\n" << A(3,3) << "\n" << A(4,4) << "\n" << A(5,5) << endl;
+    //cout << eig_comp_sort(0) << "\n" << eig_comp_sort(1) << "\n" << eig_comp_sort(2) << "\n" << eig_comp_sort(3) << endl;
+
+    //cout << "Armadillo's: " << endl;
+    //cout << eigval(0) << "\n" << eigval(1) << "\n" << eigval(2) << "\n" << eigval(3) << endl;
+    //cout << "Total error: " << err_tot << endl;
 
     //cout << "\n" <<"Dimension n: "<< n << endl;
-    cout <<"Number of iterations in Jacobi rotation: "<< iterations << endl;
+    //cout <<"Number of iterations in Jacobi rotation: "<< iterations << endl;
     //cout <<"Ratio iterations/n: "<< iterations/float(n) << endl;
 
     return 0;
