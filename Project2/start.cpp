@@ -13,7 +13,6 @@
 #include <armadillo>
 
 using namespace std;
-///using namespace arma;
 
 int* offdiagmax(arma::mat A, int n){
     int* pos = new int[2];
@@ -113,19 +112,19 @@ arma::mat CreateMatrixQuantum2(int n,double rho_max, double omega, arma::mat A){
     //Filling first row
 
     //rho_i = i*h
-    A(0,0) = d + omega*h*h + 1./(h);
+    A(0,0) = d + omega*omega*h*h + 1./(h);
     A(0,1) = a;
 
     //Filling the 3 diagonals
     for(int i=1; i<=n-2; i++){
-       A(i,i) = d + omega * (i+1)*h * (i+1)*h + 1./((i+1)*h);
+       A(i,i) = d + omega * omega * (i+1)*h * (i+1)*h + 1./((i+1)*h);
 
        A(i,i-1) = a;
        A(i,i+1) = a;
     }
 
     //Filling the last row
-    A(n-1,n-1) = d + omega * n*h * n*h + 1./(n*h);
+    A(n-1,n-1) = d + omega * omega * n*h * n*h + 1./(n*h);
     A(n-1,n-2) = a;
 
     return A;
@@ -192,12 +191,7 @@ int main(int argc, char const *argv[]){
     int n = atoi(argv[1]);
     double omega = stod(argv[2]);
     int pot_check = atoi(argv[3]);
-    //double rho_max = stod(argv[3]);
     double rho_max = 4.78;
-
-    //arma::mat A = CreateMatrix(n);
-    //arma::mat A = CreateMatrixQuantum(n,rho_max);
-    //arma::mat A = CreateMatrixQuantum2(n,rho_max,omega);
 
     //Creating matrices A and R. A is filled through the create matrix function
     arma::mat A(n,n, arma::fill::zeros);
@@ -226,7 +220,7 @@ int main(int argc, char const *argv[]){
     arma::eig_sym(eigval, eigvec, A);
 
     //Tolerance for accepting an element as zero
-    double tolerance = 1.0E-16;
+    double tolerance = 1.0E-10;
 
     //Initializing counting variables for while loop
     int iterations = 0;
@@ -252,15 +246,16 @@ int main(int argc, char const *argv[]){
     //Coulomb interaction case will contain value for omega in name
     string name;
     if(pot_check == 0){
-        name = "R_buckling";
+        name = "_buckling";
     }
     else if(pot_check == 1){
-        name = "R_quantum_dot";
+        name = "_quantum_dot";
     }
     else if(pot_check == 2){
-        name = "R_Coulomb_" + to_string(omega);
+        name = "_Coulomb_" + to_string(omega);
     }
-    R.save(name, arma::raw_ascii);
+    string Rname = "R" + name;
+    R.save(Rname, arma::raw_ascii);
 
     //Extracting eigenvalues to a vector and sorting it
     arma::vec eig_comp(n);
@@ -268,26 +263,21 @@ int main(int argc, char const *argv[]){
         eig_comp(l) = A(l,l);
     }
 
-    //Finding index of first eigenvalue for usage in python plotting program
-    arma::uword min_ind = eig_comp.index_min();
-    cout << "Index of first eigenvalue is: " << "\n" <<endl;
-    cout << min_ind << endl;
+    //Saving a vector of the eigenvalues (not sorted) to file
+    string eigname = "Eig" + name;
+    eig_comp.save(eigname,arma::raw_ascii);
 
-
-    //If writing min index to file, don't know if worth. Doesn't work currently, just overwrites.
-    // ofstream myfile;
-    // myfile.open ("indices.txt");
-    // myfile << min_ind << "\n";
-    // myfile.close();
-
-    arma::vec eig_comp_sort = arma::sort(eig_comp);
-    cout << eig_comp(16) << endl;
-    //Computing error between computed and Armadillo eigvalues for first 4.
+    //Computing error between computed and analytical eigvalues for first 4.
     //This was basically done to find the best rho_max
+    arma::vec eig_comp_sort = arma::sort(eig_comp);
     double err_tot = 0;
+    arma::vec analytic_eig(4);
+
+    //if
     for(int o=0; o<4; o++){
         err_tot = err_tot + fabs(eig_comp_sort(o) - double(3+o*4.));
     }
+
 
     //cout << "These are the first computed eigenvalues: "<< "\n" << endl;
     //cout << A(0,0) << "\n" << A(1,1) << "\n" << A(2,2) << "\n" << A(3,3) << "\n" << A(4,4) << "\n" << A(5,5) << endl;
