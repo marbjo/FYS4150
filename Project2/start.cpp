@@ -14,20 +14,20 @@
 
 using namespace std;
 
-int* offdiagmax(arma::mat A, int n){
-    int* pos = new int[2];
+void offdiagmax(arma::mat A, int n, int& k, int& l){
+    //int* pos = new int[2];
     double max = 0;
     for (int i = 0; i < n; ++i){
         for (int j = i+1; j < n; ++j){
             double aij = fabs(A(i,j));
             if (aij > max){
                 max = aij;
-                pos[0] = i;
-                pos[1] = j;
+                k = i;
+                l = j;
             }
         }
     }
-    return pos;
+    //return pos;
 }
 
 arma::mat CreateMatrix(int n, arma::mat A){
@@ -73,7 +73,7 @@ arma::mat CreateMatrixQuantum(int n,double rho_max, arma::mat A){
 
     //double rho_max = 5;
 
-    double h = rho_max / double(n);
+    double h = rho_max / double(n+1);
     double hh = h*h;
     double d = 2./hh;
     double a = -1./hh;
@@ -181,6 +181,54 @@ std::tuple<arma::mat, arma::mat> Jacobi_Rotation(arma::mat A, arma::mat R, int k
     //return A;
 }
 
+std::tuple<arma::mat, arma::mat> Multiple_Jacobi_Rotation(arma::mat A, arma::mat R, int n){
+    //Tolerance for accepting an element as zero
+    double tolerance = 1.0E-10;
+
+    //Initializing counting variables for while loop
+    int iterations = 0;
+    double maxiter = 1.0E5;
+    double maxnondiag = 1.0E8;
+
+    while (fabs(maxnondiag) > tolerance && iterations <= maxiter){
+
+        //Getting indices of the largest offdiagonal element
+        int k  = 0;
+        int l = 0;
+        offdiagmax(A,n,k,l);
+        //int p = max_ind[0];
+        //int q = max_ind[1];
+        //Assigning the value of the largest offdiagonal element
+        maxnondiag = A(k,l);
+
+        //Extracting the tuple returned from Jacobi_Rotate function
+        std::tie(A, R) = Jacobi_Rotation(A, R, k, l, n);
+        //A = Jacobi_Rotation(A,p,q,n);
+        iterations++;
+    }
+    return std::make_tuple(A, R);
+}
+
+void MaxTest(arma::mat test_mat , int n){
+    //Unit test to test if the "find largest offdiagonal element"-function is working
+    int k = 0;
+    int l = 0;
+    offdiagmax(test_mat,3,k,l);
+    //int p = max_ind[0];
+    //int q = max_ind[1];
+    double maxnondiag_test = test_mat(k,l);
+    if( maxnondiag_test == test_mat.max() ){
+        cout << "Max offdiagonal unit test passed!" << endl;
+    }
+    else{
+        cout << "Max offdiagonal unit test NOT passed!" << endl;
+        exit(1);
+    }
+
+}
+
+//void OrthogonalTest(arma::mat A_test, arma::vec R_test, int n_test){}
+
 int main(int argc, char const *argv[]){
     //Reading dimensionality,omega and 0/1/2, whether you want buckling beam, one or two electrons respectively, as command line argument
     if (argc < 4) {
@@ -191,11 +239,15 @@ int main(int argc, char const *argv[]){
     int n = atoi(argv[1]);
     double omega = stod(argv[2]);
     int pot_check = atoi(argv[3]);
-    double rho_max = 4.78;
+    //double rho_max = 8.0;//4.78;
+    double rho_max = stod(argv[4]);
 
     //Creating matrices A and R. A is filled through the create matrix function
     arma::mat A(n,n, arma::fill::zeros);
     arma::mat R = arma::mat(n,n,arma::fill::eye);
+
+    //Basically just for testing
+    arma::mat R_test = arma::mat(n,n,arma::fill::eye);
 
     if(pot_check == 0){
         //Creating matrix for Buckling Beam
@@ -214,33 +266,18 @@ int main(int argc, char const *argv[]){
         return 0;
     }
 
+    //Unit tests
+    arma::mat test_mat = {{1,2,3},{4,5,6.},{1,2,3}};
+    MaxTest(test_mat, test_mat.n_cols);
+
+
     //Computing Armadillo eigenpairs for comparison
     arma::vec eigval;
     arma::mat eigvec;
     arma::eig_sym(eigval, eigvec, A);
 
-    //Tolerance for accepting an element as zero
-    double tolerance = 1.0E-10;
-
-    //Initializing counting variables for while loop
-    int iterations = 0;
-    double maxiter = 1.0E5;
-    double maxnondiag = 1.0E8;
-
-    while (fabs(maxnondiag) > tolerance && iterations <= maxiter){
-
-        //Getting indices of the largest offdiagonal element
-        int* max_ind = offdiagmax(A,n);
-        int p = max_ind[0];
-        int q = max_ind[1];
-        //Assigning the value of the largest offdiagonal element
-        maxnondiag = A(p,q);
-
-        //Extracting the tuple returned from Jacobi_Rotate function
-        std::tie(A, R) = Jacobi_Rotation(A, R, p, q, n);
-        //A = Jacobi_Rotation(A,p,q,n);
-        iterations++;
-    }
+    //Performing Jacobi rotations on the matrix until diagonal
+    std::tie(A, R) = Multiple_Jacobi_Rotation(A, R, n);
 
     //Saving eigenvector matrix to file with appropriate name
     //Coulomb interaction case will contain value for omega in name
@@ -271,25 +308,16 @@ int main(int argc, char const *argv[]){
     //This was basically done to find the best rho_max
     arma::vec eig_comp_sort = arma::sort(eig_comp);
     double err_tot = 0;
-    arma::vec analytic_eig(4);
 
-    //if
+    //Printing first four Eigenvalues for checking.
+    cout << "First four Eigenvalues: " << endl;
+    cout << eig_comp_sort(0) << "\n" << eig_comp_sort(1) << "\n" << eig_comp_sort(2) << "\n"  << eig_comp_sort(3) << endl;
+
     for(int o=0; o<4; o++){
-        err_tot = err_tot + fabs(eig_comp_sort(o) - double(3+o*4.));
+        err_tot = err_tot + fabs(eig_comp_sort(o) - eigval(o));
     }
 
-
-    //cout << "These are the first computed eigenvalues: "<< "\n" << endl;
-    //cout << A(0,0) << "\n" << A(1,1) << "\n" << A(2,2) << "\n" << A(3,3) << "\n" << A(4,4) << "\n" << A(5,5) << endl;
-    //cout << eig_comp_sort(0) << "\n" << eig_comp_sort(1) << "\n" << eig_comp_sort(2) << "\n" << eig_comp_sort(3) << endl;
-
-    //cout << "Armadillo's: " << endl;
-    //cout << eigval(0) << "\n" << eigval(1) << "\n" << eigval(2) << "\n" << eigval(3) << endl;
-    //cout << "Total error: " << err_tot << endl;
-
-    //cout << "\n" <<"Dimension n: "<< n << endl;
-    //cout <<"Number of iterations in Jacobi rotation: "<< iterations << endl;
-    //cout <<"Ratio iterations/n: "<< iterations/float(n) << endl;
+    cout << "Total error: " << err_tot << endl;
 
     return 0;
 }
