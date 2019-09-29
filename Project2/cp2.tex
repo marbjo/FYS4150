@@ -77,10 +77,6 @@
 \begin{abstract}
 In this letter we investigate numerical solutions to Eigenvalue problems, specifically the buckling beam two point boundary value problem and the Schrödinger equation in one dimension.
 
-
-
-In this letter we analyze and compare the efficiency of a general, tailored and a LU-decomposition algorithm to solve a set of linear equations. The problem we will focus on is a discretized approximation to the one dimensional Poisson equation. The results show that, for n equations, we get $8n-7$ floating point operations (FLOPS) for the general algorithm, $4n-3$ FLOPS for the tailored algorithm and $\frac{2}{3}n^3$ FLOPS for the LU-decomposition method. We found that the optimal step length is $h=10^{-7}$. The results also show that the LU decomposition can not handle cases where the matrix is bigger or equal to $n=10^5$, whilst the other algorithms handle this very well.
-
 \end{abstract}
 \keywords{Jacobi method --- Linear algebra: Eigensolvers --- methods: computational}
 
@@ -88,17 +84,143 @@ In this letter we analyze and compare the efficiency of a general, tailored and 
 \label{sec:introduction}
 \underline{\textbf{Reasons for project and overview of report}}
 
-Solving differential equations is an integral part of most research today. For most differential equations there exists no analytic solution, so we have to use a computational approach. Generally, the more realistic the model is, the more complex it is, and therefore more computationally demanding. There would be a lot to gain to increase efficiency on the algorithms used to solve such equations, thereby allowing for more efficient memory usage to solve more complex problems or increase the resolution of a given discretization. We have presented theory for the different algorithms in the method section, provided results for CPU runtime and error estimation in the results section, and drawn some conclusions. We have also proposed future steps in the further research section.
-
-In this letter we will adopt a numerical approach to solving the one dimensional Poisson equation, which shows up in numerous areas of science.
-
 \section{Method}
 \label{sec:method}
 \underline{\textbf{Mostly the theory, math, and algorithms}}
 
 This section will describe the methods we utilized to acquire our results.
 
-\subsection{Unitary transformations}
+\subsection{Theoretical model}
+
+\subsubsection{The Schrödinger equation}
+
+Note: Some steps will be skipped here. A full derivation can be found in \cite{Project}.
+
+The radial part of the Schrödinger equation is given by
+
+\begin{equation}
+  -\frac{\hbar^2}{2 m} \left ( \frac{1}{r^2} \frac{d}{dr} r^2
+  \frac{d}{dr} - \frac{l (l + 1)}{r^2} \right )R(r)
+     + V(r) R(r) = E R(r).
+\end{equation}
+
+We consider the case of the harmonic oscillator potential, which has $V(r) = (1/2)kr^2$ with $k=m\omega^2$, where $E$ is the energy and $\omega$ is the oscillator frequency.
+
+With the substitutaion $R(r) = (1/r) u(r)$ we obtain
+
+\begin{equation}
+  -\frac{\hbar^2}{2 m} \frac{d^2}{dr^2} u(r)
+       + \left ( V(r) + \frac{l (l + 1)}{r^2}\frac{\hbar^2}{2 m}
+                                    \right ) u(r)  = E u(r) .
+\end{equation}
+
+Now in spherical coordinates we have $r\in [0,\infty)$ and boundary conditions $u(0)=0$ and $u(\infty)=0$.
+
+For the case of a repulsive Coulomb interaction, we get the result
+
+\begin{equation}
+\left(  -\frac{\hbar^2}{m} \frac{d^2}{dr^2}+ \frac{1}{4}k r^2+\frac{\beta e^2}{r}\right)\psi(r)  = E_r \psi(r).
+\end{equation}
+
+\subsubsection{Scaling the equations}
+To simplify the problem, we scale the equations. We introduce the variable $\rho = \frac{r}{\alpha}$, where $\alpha$ is a constant. Introducing this into the equations, and requiring that
+
+\begin{equation}
+\frac{mk}{\hbar^2} \alpha^4 = 1,
+\end{equation}
+
+ as well as defining
+
+ \begin{equation}
+\lambda = \frac{2m\alpha^2}{\hbar^2}E,
+\end{equation}
+
+we arrive at
+
+\begin{equation}
+  -\frac{d^2}{d\rho^2} u(\rho) + \rho^2u(\rho)  = \lambda u(\rho),
+\end{equation}
+
+for the case of one electron. For the case of two electrons with a repulsive Coulomb interaction, we also define a frequency
+
+\begin{equation}
+\omega_r^2=\frac{1}{4}\frac{mk}{\hbar^2} \alpha^4,
+\end{equation}
+
+fix the constant $\alpha$ by
+
+\begin{equation}
+\frac{m\alpha \beta e^2}{\hbar^2}=1
+\end{equation}
+
+and introducing
+
+\begin{equation}
+\lambda = \frac{m\alpha^2}{\hbar^2}E,
+\end{equation}
+
+we arrive at
+
+\begin{equation}
+  -\frac{d^2}{d\rho^2} \psi(\rho) + \omega_r^2\rho^2\psi(\rho) +\frac{1}{\rho} = \lambda \psi(\rho).
+\end{equation}
+
+\subsection{Numerical model}
+We will discretize the problem to reduce it to an Eigenvalue problem. We divide our variable $\rho$ into N points, and define a step length h as
+
+\begin{equation}
+  h=\frac{\rho_N-\rho_0 }{N}.
+\end{equation}
+
+We then get a discretized variable $rho_i$, given by
+\[
+    \rho_i= \rho_0 + ih \hspace{1cm} i=1,2,\dots , N.
+\]
+Using the approximation
+
+\begin{equation}
+    \frac{d^2}{d\rho^2} u(\rho) =\frac{u(\rho+h) -2u(\rho) +u(\rho-h)}{h^2} +O(h^2),
+    \label{eq:diffoperation}
+\end{equation}
+
+for the second derivative, and using shorthand notation, we can write the Schrödinger equation as
+
+\begin{equation}
+-\frac{u_{i+1} -2u_i +u_{i-1} }{h^2}+V_iu_i  = \lambda u_i
+\end{equation}
+
+We define the diagonal elements d as
+\begin{equation}
+   d_i=\frac{2}{h^2}+V_i,
+\end{equation}
+
+where we have $V_i = \rho^2$ for the case of one electron, and $V_i = \omega_r^2 \rho^2 + \frac{1}{\rho}$ for the case of the repulsive Coulomb interaction. The non-diagonal matrix elements given as
+
+\begin{equation}
+   e_i=-\frac{1}{h^2}.
+\end{equation}
+
+This simplifies the equation further, and it reduces to
+
+\begin{equation}
+d_iu_i+e_{i}u_{i-1}+e_{i}u_{i+1}  = \lambda u_i,
+\end{equation}
+
+We get the Eigenvalue equation $\mathbf{A}\vec{u} = \lambda \vec{u}$, with $\mathbf{A}$ given as
+
+\begin{equation}
+    \mathbf{A} =
+    \begin{bmatrix}d_1 & e_1 & 0   & 0    & \dots  &0     & 0 \\
+                                e_1 & d_2 & e_2 & 0    & \dots  &0     &0 \\
+                                0   & e_2 & d_3 & e_3  &0       &\dots & 0\\
+                                \dots  & \dots & \dots & \dots  &\dots      &\dots & \dots\\
+                                0   & \dots & \dots & \dots  &\dots  e_{N-3}     &d_{N-2} & e_{N-2}\\
+                                0   & \dots & \dots & \dots  &\dots       &e_{N-2} & d_{N-1}
+             \end{bmatrix}
+      \label{eq:sematrix}
+\end{equation}
+
+\subsubsection{Unitary transformations}
 Unitary or orthogonal transformations have the property of conserving the dot product and orthogonality. We will show this for orthogonal matrices, but the argument extends to unitary transformations in the complex domain.
 
 Suppose we have two vectors $\bold{v}_i$ and $\bold{v}_j$. Now, if we consider a orthogonal matrix $\bold{U}$, it has the property that $\bold{U}^T = \bold{U}^{-1}$ such that $\bold{U}^T\bold{U} = \bold{U}\bold{U}^T = \bold{I}$. Applying the transformation, we get new vectors $\bold{w}_i = \bold{U}\bold{v}_i$ and $ \bold{w}_j = \bold{U}\bold{v}_j$.
@@ -120,226 +242,46 @@ which finally gives us
 
 This shows the dot product is conserved. If we also assume that $\bold{v}_i$ and $\bold{v}_j$ is part of an orthogonal basis, such that $\bold{v}_i \boldsymbol{\cdot} \bold{v}_j = \delta_{ij}$, then we from equation \ref{eq:dot} that $\bold{w}_i \boldsymbol{\cdot} \bold{w}_j = \delta_{ij}$ is also true.
 
-\subsection{Model}
-We want to solve the one dimensional Poisson equation shown in equation \ref{eq:poisson}.
+\subsubsection{Jacobi's rotation algorithm}
+We are now ready to implement our solver. Using the above result, we know that similarity transformations will conserve the Eigenpairs of the equation. The idea is to apply multiple rotation matrices
 
-\begin{equation} \label{eq:poisson}
-    -\frac{d^2u(x)}{dx^2} = f(x).
-\end{equation}
-We confine the equation to a normalized interval and with Dirichlet boundary conditions, namely
+\[\mathbf{S}_n^T\mathbf{S}_{n-1}^T...\mathbf{S}_1^T\mathbf{A}\mathbf{S}_1\mathbf{S}_2...\mathbf{S}_n\]
 
-\begin{equation} \label{eq:conditions}
-    x \in [0,1]\text{   } , \text{   } u(0) = u(1) = 0.
-\end{equation}
-For reference, we assume the source term to be
-\begin{equation} \label{eq:fofx}
-    f(x) = 100e^{-10x}.
-\end{equation}
-The equation then has an analytic solution in
-\begin{equation} \label{eq:analytic}
-    u(x) =1 - \left(1-e^{-10}\right)x - e^{-10x}.
-\end{equation}
-
-We discretize the interval to $n+2$ points, so that $x_0 = 0$ and $x_{n+1} = 1$, giving a step length of $h = \frac{1}{n+1}$. We approximate the second derivative to the second order, giving equation \ref{eq:approx} for a point $f(x_i)$:
-
-\begin{equation} \label{eq:approx}
-    - \frac{v_{i+1} + v_{i-1} - 2v_{i}}{h^2} = f_i
-\end{equation}
-This can be rewritten as
+such that A eventually becomes diagonalized. To find these rotation matrices, we use the equations
 
 \begin{equation}
-    -v_{i-1} + 2v_{i} - v_{i+1} = f_i \cdot h^2
+  t = -\tau \pm \sqrt{1+\tau^2},
 \end{equation}
-for $i=1,...,n$ and the end points decided by the boundary conditions. We then get a set of n equations like following
-
-\begin{align*}
-    - v_{0} + 2v_{1} - &v_{2} = f_1 \cdot h^2 \\
-    - v_{1} + 2&v_{2} - v_{3} = f_2 \cdot h^2 \\
-    - &v_{2} + 2v_{3} - v_{4} = f_3 \cdot h^2 \\
-    \vdots
-\end{align*}
-Written as a matrix equation, this produces the equation
 
 \begin{equation}
-    \bold{A}\bold{v} = \bold{\tilde{f}}
-\end{equation}
-with $\bold{\tilde{f}} = \bold{f}\cdot h^2$ and the tri-diagonal $n \times n$ matrix
-
-\begin{equation} \label{eq:specialmatrix}
-    \bold{A} = \left( \begin{array}{cccc}
-2 & -1 & & 0\\
--1 & \ddots & \ddots & \\
-& \ddots & \ddots & -1 \\
-0 & & -1 & 2 \end{array} \right) .
-\end{equation}
-
-\subsubsection{General case}
-We first address the general case, where we don't assume the values of the upper, lower and main diagonal. Adopting separate names for the three diagonals, $\bold{a}$,$\bold{b}$ and $\bold{c}$, we can represent the equation by the agumented matrix
-\begin{equation} \label{eq:generalmatrix}
-    \bold{A} = \left( \begin{array}{cccc}
-b_{1} & c_1 & & 0 \\
-a_1 & \ddots & \ddots & \\
-& \ddots & \ddots & c_{n-1} \\
-0 & & a_{n-1} & b_{n} \end{array} \right)
-\left( \begin{array}{c}
-v_1 \\
-\vdots \\
-\vdots \\
-v_n
-\end{array} \right)
-= \left( \begin{array}{c}
-\tilde{f_1} \\
-\vdots \\
-\vdots \\
-\tilde{f_n}
-\end{array} \right)
-.
-\end{equation}
-We solve this by first a forward substitution, I.E removing the elements below the pivot elements ($\bold{a}$) in the augmented matrix, to obtain an upper triangular matrix. The diagonal elements will be updated as
-
-\begin{equation}
-    \tilde{b_2} = b_2 - \frac{a_1 \cdot c_1}{b_1},
-\end{equation}
-and the source term will be updated as
-
-\begin{equation}
-    \dbtilde{f_2} = \tilde{f_2} - \frac{a_1 \cdot \tilde{f_1}}{b_1}.
-\end{equation}
-Generally, the scheme will become
-
-\begin{equation} \label{eq:fgen1}
-    \tilde{b_i} = b_i - \frac{a_{i-1} \cdot c_{i-1}}{\tilde{b}_{i-1}},
+   c = \frac{1}{\sqrt{1+t^2}},
 \end{equation}
 and
-\begin{equation} \label{eq:fgen2}
-    \dbtilde{f_{i}} = \tilde{f_{i}} - \frac{a_{i-1} \cdot \tilde{f_{i-1}}}{\tilde{b}_{i-1}}
-\end{equation}
-iterated from 2 to n. We then obtain an upper triangular matrix with updated elements, shown as the following augmented matrix.
-
 \begin{equation}
-    \bold{C} = \left( \begin{array}{ccccc}
-b_{1} & c_1 & & 0 & \tilde{f_1} \\
-0 & \ddots & \ddots & & \vdots \\
-& \ddots & \ddots & c_{n-1} & \vdots \\
-0 & & 0 & \tilde{b_{n}} & \dbtilde{f_n} \end{array} \right)
-\end{equation}
-Now, we normalize the diagonal, which gives us
-\begin{equation} \label{eq:norm1}
-    {u}_{i} = \frac{\dbtilde{f}_{i}}{\tilde{b}_i},
-\end{equation}
-and
-\begin{equation} \label{eq:norm2}
-    \tilde{c}_{i} = \frac{{c}_{i}}{\tilde{b}_i},
+    s = tc,
 \end{equation}
 
-We now perform the backward substitution, I.E removing the elements above the main diagonal ($\bold{\tilde{c}}$). The main diagonal stays unchanged, but the source terms updates as follows
+where we have defined $\tan\theta = t= s/c$, with $s=\sin\theta$ and $c=\cos\theta$ and
 
-\begin{equation}
-    \tilde{u}_{i-1} = u_{i-1} - \tilde{c}_{i-1} u_i.
-\end{equation}
-However, if we insert for $u_{i-1}$ and $\tilde{c}_{i-1}$ from equations \ref{eq:norm1} and \ref{eq:norm2} respectively, we see that we can write this as one operation:
+\begin{equation*}
+    \cot 2\theta=\tau = \frac{a_{ll}-a_{kk}}{2a_{kl}}.
+\end{equation*}
 
-\begin{equation} \label{eq:finalback}
-    \tilde{u}_{i-1} = \frac{\dbtilde{f}_{i-1}}{\tilde{b}_{i-1}} - \frac{c_{i-1}}{b_{i-1}} u_i = \frac{\dbtilde{f}_{i-1} -c_{i-1}u_i }{b_{i-1}}.
-\end{equation}
-We iterate this from $n$ to $2$.
+It can be shown, if you choose to zero out the largest off-diagonal element, that the norm of the new off-diagonal elements after rotation is smaller than the reduction in the off-diagonal element we're trying to zero out. Therefore, Jacobi's algorithm will always tend to all off-diagonal elements eventually being zero.
 
-\subsubsection{Special case}
-We return to the special case illustrated in equation \ref{eq:specialmatrix}, where the diagonals have the same elements. Looking back to equation \ref{eq:fgen1}, we now know that all a's and c's will be -1, and all b's will be 2. We then get
+\subsubsection{Choice of $\rho_{max}$, integration points and unit tests}
 
-\begin{equation} \label{eq:sgen1}
-    \tilde{b}_i = 2 - \frac{1}{\tilde{b}_{i-1}}.
-\end{equation}
-With $b_1 = 2$, we see that we get $b_2 = \frac{3}{2}$, $b_3 = \frac{4}{3}$, $b_4 = \frac{5}{4}$, and we can write equation \ref{eq:sgen1} as
-\begin{equation} \label{eq:sgen11}
-    \tilde{b}_i = \frac{i+1}{i}.
-\end{equation}
-Similarly, comparing back to equation \ref{eq:fgen2}, we now get
-
-\begin{equation} \label{eq:sgen1}
-    \dbtilde{f_{i}} = \tilde{f_{i}} + \frac{\tilde{f}_{i-1}}{\tilde{b}_{i-1}}.
-\end{equation}
-However, inserting from our result in equation \ref{eq:sgen11}, we get
-
-\begin{equation} \label{eq:sgen22}
-    \dbtilde{f_{i}} = \tilde{f_{i}} + \frac{ \tilde{f}_{i-1}}{\frac{\left(i-1\right)+1}{\left(i-1\right)}} = \tilde{f_{i}} + \frac{\left(i-1\right)\tilde{f}_{i-1}}{i}.
-\end{equation}
-This is iterated from $2$ to $n$.
-
-Finally, the backwards substitution. We look back to equation \ref{eq:finalback}, and see that it becomes
-
-\begin{equation} \label{eq:sgenback}
-    u_{i-1} =  \frac{\dbtilde{f}_{i-1} + u_i }{b_{i-1}}.
-\end{equation}
-and substituting in the result from \ref{eq:sgen11} again, we get
-\begin{equation} \label{eq:sgenback}
-    u_{i-1} =  \frac{\dbtilde{f}_{i-1} + u_i }{ \frac{\left(i-1\right)+1}{\left(i-1\right)} } = \frac{\left(i-1\right)}{i}\left(\dbtilde{f}_{i-1} + u_i\right) .
-\end{equation}
-Thus, we can precalculate the factor $\frac{i-1}{i}$, and will only count as a constant multiplication (one flop) in each iteration.
-
-\subsubsection{LU decomposition}
-A standard way to solve linear equations is the LU decomposition. For an equation $\bold{A}\bold{x} = \bold{b}$, we decompose A into an upper- and lower triangular matrix, which produces the equation
-
-\begin{equation} \label{eq:LU1}
-    \bold{L}\bold{U} \bold{x} = \bold{b}.
-\end{equation}
-Now grouping $\bold{U}$ and $\bold{x}$ to form a new vector, we get the two equations
-\begin{equation} \label{eq:LU2}
-    \bold{U}\bold{x} = \bold{y},
-\end{equation}
-
-\begin{equation} \label{eq:LU2}
-    \bold{L}\bold{y} = \bold{b}.
-\end{equation}
-These equations can be solved in succession for each point i.
 
 \section{Results}
 \label{sec:results}
 
 \underline{\textbf{Figures, computation time, efficiency, error etc.}}
-\subsection{Number of floating point operations in each algorithm}
-
-The amount of FLOPS for the first algorithm will in total be: $3\left(n-1\right)$ from equation \ref{eq:fgen1}, $2\left(n-1\right)$ from \ref{eq:fgen2} (since $\frac{a_{i-1}}{b_{i-1}}$ is already calculated), and $3\left(n-1\right)$ from equation \ref{eq:finalback}. We will also require one final flop to normalize the last diagonal element $\dbtilde{b}_n$. So in total, we get $8n - 7$ FLOPS.
-
-The resulting FLOPS for the tailored algorithm will for equation \ref{eq:sgen22} be $2\left(n-1\right)$ and for equation \ref{eq:sgenback} we get $2\left(n-1\right)$. We also need to normalize $u_n$ before we start the backwards substitution, so this adds one flop. In total we get $4n-3$ FLOPS.
-
-The amount of FLOPS for the LU-decomposition method has already been thoroughly stated in the literature, and turns out to be $\frac{2}{3}n^3$ \cite{MHJ}.
-
-The CPU time in seconds is shown in table \ref{tab:results}.
-
-\begin{deluxetable}{cccc}
-\tablewidth{0pt}
-\tablecaption{\label{tab:results}}
-\tablecomments{CPU time for each algorithm. All values are given in seconds. Note: only the algorithm, I.E the forward and backward substitution, is timed.}
-\tablecolumns{4}
-\tablehead{n & General & Tailored & LU}
-\startdata
-
-$10$ & $1\cdot 10^{-6}$ & $3 \cdot 10^{-6}$ & $1.130 \cdot 10^{-4}$ \\
-$10^2$ & $2\cdot 10^{-6}$ & $7 \cdot 10^{-6}$ & $8.190 \cdot 10^{-4}$ \\
-$10^3$ & $1.1\cdot 10^{-5}$ & $4.800 \cdot 10^{-5}$ & $6.233 \cdot 10^{-2}$ \\
-$10^4$ & $1.880\cdot 10^{-4}$ & $4.530 \cdot 10^{-4}$ & $1.889 \cdot 10^{2}$ \\
-$10^5$ & $1.925\cdot 10^{-3}$ & $1.694 \cdot 10^{-3}$ & Insufficient memory \\
-$10^6$ & $1.880 \cdot 10^{-2} $ & $1.601 \cdot 10^{-2}$ & Insufficient memory \\
-$10^7$ & $1.907 \cdot 10^{-1} $ & $1.160 \cdot 10^{-1}$ & Insufficient memory
-\enddata
-\end{deluxetable}
-
-\subsection{Numerical error}
-These methods converge to the solution quickly. Already for $n=100$ we are really close to the analytic solution. A plot comparing the analytic and numerical solution for the general algorithm is shown in figure \ref{fig:1} and \ref{fig:2}
-
-The error as a function of step size is also shown in figure \ref{fig:3}. We can see the error goes as a linear graph with slope 2, which shows in a logarithmic plot that the error scales as $h^2$.
-
-This shows that a smaller step size is not always better, as we reach a minimum of error at step size $h=10^{-5}$. This is because for very small step sizes, the error in adding and subtracting nearly equal numbers increase, I.E. $u(x+h)+u(x-h)-2u(x)$ for our numerical derivative. We again divide this by $h^2$, further blowing up the error for small step sizes h, leading to loss of numerical precision.
 
 \section{Conclusions}
 \label{sec:conclusions}
 \underline{\textbf{What we have supposed to have learned}}
 \underline{\textbf{and the ideas the results should have confirmed}}
 
-The results in this letter shows that when faced with a set of linear equations, one has a lot to gain to tailor your algorithm to the special case you are dealing with. Saving CPU time by a factor of 2 is substantial, and comparing to the LU-decomposition, for which the CPU time differs by a factor of $~n^2$, tailoring the algorithm is absolutely essential.
-
-We have also seen that for some cases, the problem is not even solvable by the standard LU-decomposition. For matrices with $n=10^5$ or above, we did not have enough memory to perform the algorithm. However, the tailored methods work just fine, since we do not have to construct a whole matrix.
 
 \pagebreak
 
@@ -347,12 +289,10 @@ We have also seen that for some cases, the problem is not even solvable by the s
 
 \underline{\textbf{Silly section, pretending to be real researchers}}
 
-In this letter we have focused on the Poisson equation, with a specific second order approximation. However, similar analysis can be done for several other types of equations, or different approximations. There would be a lot to gain by gaining as efficient methods as possible for each specific case, so that bigger and more complex systems can be simulated and analyzed.
-
 \begin{thebibliography}{}
-\bibitem[(Hjorth-Jensen, 2018)]{MHJ} Hjorth-Jensen, Morten \, Sep 15 2017, "Computational Physics Lectures:Eigenvalue problems" , http://compphysics.github.io/ComputationalPhysics/doc/pub/eigvalues/pdf/eigvalues-print.pdf
+\bibitem{Lecture}[(Hjorth-Jensen, 2018)]{MHJ} Hjorth-Jensen, Morten \, Sep 15 2017, "Computational Physics Lectures:Eigenvalue problems" , http://compphysics.github.io/ComputationalPhysics/doc/pub/eigvalues/pdf/eigvalues-print.pdf
 
-\bibitem[(Hjorth-Jensen, 2018)]{MHJ} Hjorth-Jensen, Morten \, Sep 6 2018, "Project 2"
+\bibitem{Project}[(Hjorth-Jensen, 2018)]{MHJ} Hjorth-Jensen, Morten \, Sep 6 2018, "Project 2"
 http://compphysics.github.io/ComputationalPhysics/doc/Projects/2019/Project2/pdf/Project2.pdf
 
 \end{thebibliography}
