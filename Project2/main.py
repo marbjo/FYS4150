@@ -360,7 +360,7 @@ if __name__ == '__main__':
     do_interact = False
     do_noninteract = False
     do_interact_numpy = False
-    do_time = False
+    do_time = True
     plot_compare = False
     eval_accuracy = False
 
@@ -371,19 +371,20 @@ if __name__ == '__main__':
 
     if (do_time == True):
         #time algorithms
-        print('Time for Jacobi')
-        a, b = time_algo(30, 0, 1, algo = 'jacobi')
-        print(a, '\n')
-        print('Time for numpy')
-        c, _ = time_algo(30, 0, 1, algo = 'numpy')
-        print(c, '\n')
+
+        a, b = time_algo(50, 0, 1, algo = 'jacobi')
+        c, _ = time_algo(50, 0, 1, algo = 'numpy')
         fig = plt.figure()
-        plt.plot(b**2, a, label = 'Jacobi Time')
-        plt.plot(b**2, c, label = 'Numpy.linalg.eig Time')
-        plt.xlabel('Grid points N^2')
+        plt.title('Jacobi vs Numpy Eigensolver Time')
+        plt.plot(b, a, label = 'Jacobi Time')
+        plt.plot(b, c, label = 'Numpy.linalg.eig Time')
+        plt.xlabel('Mesh Points N')
         plt.ylabel('Time in Seconds')
+        plt.grid()
         plt.legend()
+        fig.savefig('jacobi_numpy_time.png')
         plt.show()
+
 
     if (do_noninteract == True):
         #wave functions for non interacting potnential for two particle
