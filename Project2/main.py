@@ -10,6 +10,7 @@ class Rotation_Object():
     potential options:
         'no pot' = solve with no potential
         'hamiltonian' = solve with hamiltonian potential
+        'non interact' = 2 particle non interacting potential
         'repulsive' = solve with repulsive hamiltonian potential
 
     '''
@@ -268,6 +269,16 @@ def sort_results(Evalues, Evectors, algo):
 
     return Evalues, newvec
 
+def interations_algo(n, rho_min, rho_max, algo = 'jacobi', potential = 'no pot'):
+    itervec = np.zeros(n-1)
+    nvec = np.zeros(n-1)
+    for i in range(2, n+1):
+        obj = Rotation_Object(i, potential, start = rho_min, stop = rho_max)
+        obj.build
+        _, _, itervec[i-2] = obj.jacobi_method()
+        nvec[i-2] = i
+    return itervec, nvec
+
 def time_algo(n, rho_min, rho_max, algo = 'jacobi', potential = 'no pot', maxnondiag = 1.0E8, tol = 1.0E-10, maxiter = 1.0E5):
     '''
     times the alogrithm as it solves the eigen values for matrixes of size 2x2 to nxn
@@ -296,10 +307,10 @@ def time_algo(n, rho_min, rho_max, algo = 'jacobi', potential = 'no pot', maxnon
             nvec[i-2] = i
     return timevec, nvec
 
-def one_particle_accuracy(n, rho_min, rho_max, algo = 'jacobi', maxnondiag = 1.0E8, tol = 1.0E-10, maxiter = 1.0E5):
+def one_particle_accuracy(n, rho_min, rho_max, omegaval, algo = 'jacobi', maxnondiag = 1.0E8, tol = 1.0E-10, maxiter = 1.0E5):
 
     if (algo == 'jacobi'):
-        obj = Rotation_Object(n, 'hamiltonian', start = rho_min, stop = rho_max)
+        obj = Rotation_Object(n, 'non interact', omega = omegaval, start = rho_min, stop = rho_max)
         obj.build
         xpoints = obj.xvec
         eval, evec, _ = obj.jacobi_method(maxnondiag, tol, maxiter)
@@ -307,7 +318,7 @@ def one_particle_accuracy(n, rho_min, rho_max, algo = 'jacobi', maxnondiag = 1.0
         return sorted_val, sorted_vec, xpoints
 
     if (algo == 'numpy'):
-        obj = Rotation_Object(n, 'hamiltonian', start = rho_min, stop = rho_max)
+        obj = Rotation_Object(n, 'non interact', start = rho_min, stop = rho_max)
         obj.build
         xpoints =obj.xvec
         eval, evec = obj.numpy_solve()
@@ -354,20 +365,35 @@ def jacobi_unit_test():
         print('Jacobi algorithm Eigenvectors are orthogonal')
 
 
+
 if __name__ == '__main__':
 
     unit_test = False
-    do_interact = False
-    do_noninteract = False
+    do_iterations = False
+    do_time = False
+    do_compare_0 = False
+    do_compare_1 = False
+    do_compare_2 = False
+    do_compare_3 = False
     do_interact_numpy = False
-    do_time = True
     plot_compare = False
-    eval_accuracy = False
+    eval_accuracy = True
 
     if (unit_test == True):
 
         diagonal_unit_test()
         jacobi_unit_test()
+
+    if(do_iterations == True):
+        a, b = interations_algo(50, 0, 1, algo = 'jacobi', potential = 'no pot')
+        fig = plt.figure()
+        plt.title('Jacobi Iterations')
+        plt.plot(b, a)
+        plt.xlabel('Mesh Points N')
+        plt.ylabel('Iterations')
+        plt.grid()
+        fig.savefig('jacobi_iterations.png')
+        plt.show()
 
     if (do_time == True):
         #time algorithms
@@ -385,37 +411,61 @@ if __name__ == '__main__':
         fig.savefig('jacobi_numpy_time.png')
         plt.show()
 
-
-    if (do_noninteract == True):
+    if (do_compare_0 == True):
         #wave functions for non interacting potnential for two particle
-        noninteract = Rotation_Object(100, potential = 'non interact', omega = .01, start = 0, stop = 50)
+        noninteract = Rotation_Object(100, potential = 'non interact', omega = .01, start = 0, stop = 45)
         noninteract.build
-        xpoints = noninteract.xvec
-        c, d, _ = noninteract.jacobi_method()
-        eval, evec = sort_results(c, d, 'jacobi')
+        xpoints0 = noninteract.xvec
+        c, d = np.linalg.eig(noninteract._A)
+        _, n0 = sort_results(c, d, 'numpy')
 
-    if (do_interact == True):
-        #wave functions for potential including coulomb potential
-        interact = Rotation_Object(60, potential = 'repulsive', omega = .01, start = 0, stop = 35)
+        interact = Rotation_Object(100, potential = 'repulsive', omega = .01, start = 0, stop = 45)
         interact.build
-        xpoints = interact.xvec
-        e, f, _ = interact.jacobi_method()
-        oval, ovec = sort_results(e, f, 'jacobi')
+        xpoints0 = interact.xvec
+        e, f = np.linalg.eig(interact._A)
+        _, i0 = sort_results(e, f, 'numpy')
 
-        interact1 = Rotation_Object(60, potential = 'repulsive', omega = .5, start = 0, stop = 35)
-        interact1.build
-        e, f, _ = interact1.jacobi_method()
-        oval1, ovec1 = sort_results(e, f, 'jacobi')
+    if (do_compare_1 == True):
+        #wave functions for non interacting potnential for two particle
+        noninteract = Rotation_Object(100, potential = 'non interact', omega = .5, start = 0, stop = 5)
+        noninteract.build
+        xpoints1 = noninteract.xvec
+        c, d = np.linalg.eig(noninteract._A)
+        _, n1 = sort_results(c, d, 'numpy')
 
-        interact2 = Rotation_Object(60, potential = 'repulsive', omega = 1, start = 0, stop = 35)
-        interact2.build
-        e, f, _ = interact2.jacobi_method()
-        oval2, ovec2 = sort_results(e, f, 'jacobi')
+        interact = Rotation_Object(100, potential = 'repulsive', omega = .5, start = 0, stop = 5)
+        interact.build
+        xpoints1 = interact.xvec
+        e, f = np.linalg.eig(interact._A)
+        _, i1 = sort_results(e, f, 'numpy')
 
-        interact3 = Rotation_Object(60, potential = 'repulsive', omega = 5, start = 0, stop = 35)
-        interact3.build
-        e, f, _ = interact3.jacobi_method()
-        oval3, ovec3 = sort_results(e, f, 'jacobi')
+    if (do_compare_2 == True):
+        #wave functions for non interacting potnential for two particle
+        noninteract = Rotation_Object(100, potential = 'non interact', omega = 1, start = 0, stop = 4)
+        noninteract.build
+        xpoints2 = noninteract.xvec
+        c, d = np.linalg.eig(noninteract._A)
+        _, n2 = sort_results(c, d, 'numpy')
+
+        interact = Rotation_Object(100, potential = 'repulsive', omega = 1, start = 0, stop = 4)
+        interact.build
+        xpoints2 = interact.xvec
+        e, f = np.linalg.eig(interact._A)
+        _, i2 = sort_results(e, f, 'numpy')
+
+    if (do_compare_3 == True):
+        #wave functions for non interacting potnential for two particle
+        noninteract = Rotation_Object(100, potential = 'non interact', omega = 5, start = 0, stop = 2)
+        noninteract.build
+        xpoints3 = noninteract.xvec
+        c, d = np.linalg.eig(noninteract._A)
+        _, n3 = sort_results(c, d, 'numpy')
+
+        interact = Rotation_Object(100, potential = 'repulsive', omega = 5, start = 0, stop = 2)
+        interact.build
+        xpoints3 = interact.xvec
+        e, f = np.linalg.eig(interact._A)
+        _, i3 = sort_results(e, f, 'numpy')
 
     if (do_interact_numpy == True):
         obj = Rotation_Object(50, potential = 'repulsive', omega = .01, start = 0, stop = 50)
@@ -427,27 +477,57 @@ if __name__ == '__main__':
         print('Evec jacobi= ', evec2[:,0])
 
     if (plot_compare == True):
-        fig = plt.figure()
-        # plt.plot(xpoints,evec[:,0], label = 'non-interacting particles' )
-        plt.plot(xpoints,ovec[:,0]**2, label = 'omega = 0.01')
-        plt.plot(xpoints,ovec1[:,0]**2, label = 'omega = 0.5')
-        plt.plot(xpoints,ovec2[:,0]**2, label = 'omega = 1')
-        plt.plot(xpoints,ovec3[:,0]**2, label = 'omega = 5')
-
-        # plt.plot(xpoints,evec2[:,0]**2, label = 'numpy interacting particles')
+        fig0 = plt.figure()
+        plt.title(r'Eigenfunction for $\omega = 0.01$')
+        plt.plot(xpoints0,n0[:,0]**2, label = 'non interacting')
+        plt.plot(xpoints0,i0[:,0]**2, label = 'interacting')
+        plt.xlabel(r'$\rho$')
+        plt.ylabel(r'$\mid u(\rho) \mid ^2$')
+        plt.grid()
         plt.legend()
+        fig0.savefig('omega_01.png')
+        plt.show()
+
+        fig1 = plt.figure()
+        plt.title(r'Eigenfunction for $\omega = 0.5$')
+        plt.plot(xpoints1,n1[:,0]**2, label = 'non interacting')
+        plt.plot(xpoints1,i1[:,0]**2, label = 'interacting')
+        plt.xlabel(r'$\rho$')
+        plt.ylabel(r'$\mid u(\rho) \mid ^2$')
+        plt.grid()
+        plt.legend()
+        fig1.savefig('omega_5.png')
+        plt.show()
+
+        fig2 = plt.figure()
+        plt.title(r'Eigenfunction for $\omega = 1$')
+        plt.plot(xpoints2,n2[:,0]**2, label = 'non interacting')
+        plt.plot(xpoints2,i2[:,0]**2, label = 'interacting')
+        plt.xlabel(r'$\rho$')
+        plt.ylabel(r'$\mid u(\rho) \mid ^2$')
+        plt.grid()
+        plt.legend()
+        fig2.savefig('omega1.png')
+        plt.show()
+
+        fig3 = plt.figure()
+        plt.title(r'Eigenfunction for $\omega = 5$')
+        plt.plot(xpoints3,n3[:,0]**2, label = 'non interacting')
+        plt.plot(xpoints3,i3[:,0]**2, label = 'interacting')
+        plt.xlabel(r'$\rho$')
+        plt.ylabel(r'$\mid u(\rho) \mid ^2$')
+        plt.grid()
+        plt.legend()
+        fig3.savefig('omega5.png')
         plt.show()
 
     if (eval_accuracy == True):
         t0 = time.time()
-        a, b, c = one_particle_accuracy(75, 0, 5, algo = 'jacobi', maxnondiag = 1.0E8, tol = 1.0E-10, maxiter = 1.0E5)
+        a, b, c = one_particle_accuracy(100, 0, 5, 1, algo = 'jacobi', maxnondiag = 1.0E8, tol = 1.0E-10, maxiter = 1.0E5)
         t1 = time.time()
-        np.set_printoptions(precision = 5)
+        np.set_printoptions(precision = 7)
         print(a[0:5])
-        print('time= ', t1-t0)
-        fig = plt.figure()
-        plt.plot(c, b[:,0])
-        plt.show()
+        print('Time= ', t1-t0)
 
 
 
