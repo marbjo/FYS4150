@@ -156,7 +156,10 @@ class Rotation_Object():
         return eval, evec
 
 class Test_object():
-
+    '''
+    Class that creates an object to do the unit tests to so we can hard code quantities
+    and ensure methods are returning the right answers
+    '''
     def __init__(self):
         self._size = 4
         self._R = np.eye(4)
@@ -270,6 +273,9 @@ def sort_results(Evalues, Evectors, algo):
     return Evalues, newvec
 
 def interations_algo(n, rho_min, rho_max, algo = 'jacobi', potential = 'no pot'):
+    '''
+    Algorithm to return iterations needed to diagonalize matrix
+    '''
     itervec = np.zeros(n-1)
     nvec = np.zeros(n-1)
     for i in range(2, n+1):
@@ -308,7 +314,9 @@ def time_algo(n, rho_min, rho_max, algo = 'jacobi', potential = 'no pot', maxnon
     return timevec, nvec
 
 def one_particle_accuracy(n, rho_min, rho_max, omegaval, algo = 'jacobi', maxnondiag = 1.0E8, tol = 1.0E-10, maxiter = 1.0E5):
-
+    '''
+    simple function to return Eigenvalues and Vectors to compare to known solutions
+    '''
     if (algo == 'jacobi'):
         obj = Rotation_Object(n, 'non interact', omega = omegaval, start = rho_min, stop = rho_max)
         obj.build
@@ -326,6 +334,10 @@ def one_particle_accuracy(n, rho_min, rho_max, omegaval, algo = 'jacobi', maxnon
         return sorted_val, sorted_vec, xpoints
 
 def diagonal_unit_test():
+    '''
+    Unit test to check that the off diagonal max function is working. Test_object() creates a
+    matrix with maximum at index [0,3]
+    '''
     A = Test_object()
     A.build_test
     max_index = A.offdiagmax
@@ -336,7 +348,10 @@ def diagonal_unit_test():
         print('Max index finder working')
 
 def jacobi_unit_test():
-
+    '''
+    Unit test to check that Jacobi method is returning correct eigen vectors and that
+    they are orthogonal
+    '''
     eps = 1e-8
 
     A = Test_object()
@@ -375,7 +390,6 @@ if __name__ == '__main__':
     do_compare_1 = False
     do_compare_2 = False
     do_compare_3 = False
-    do_interact_numpy = False
     plot_compare = False
     eval_accuracy = True
 
@@ -384,6 +398,7 @@ if __name__ == '__main__':
         diagonal_unit_test()
         jacobi_unit_test()
 
+    #plot iterations needed to solve vs matrix size
     if(do_iterations == True):
         a, b = interations_algo(50, 0, 1, algo = 'jacobi', potential = 'no pot')
         fig = plt.figure()
@@ -395,6 +410,7 @@ if __name__ == '__main__':
         fig.savefig('jacobi_iterations.png')
         plt.show()
 
+    #plot time needed to solve vs matrix size
     if (do_time == True):
         #time algorithms
 
@@ -411,6 +427,7 @@ if __name__ == '__main__':
         fig.savefig('jacobi_numpy_time.png')
         plt.show()
 
+    #solve interacting and non interacting for omega = 0.01
     if (do_compare_0 == True):
         #wave functions for non interacting potnential for two particle
         noninteract = Rotation_Object(100, potential = 'non interact', omega = .01, start = 0, stop = 45)
@@ -425,6 +442,7 @@ if __name__ == '__main__':
         e, f = np.linalg.eig(interact._A)
         _, i0 = sort_results(e, f, 'numpy')
 
+    #solve interacting and non interacting for omega = 0.5
     if (do_compare_1 == True):
         #wave functions for non interacting potnential for two particle
         noninteract = Rotation_Object(100, potential = 'non interact', omega = .5, start = 0, stop = 5)
@@ -439,6 +457,7 @@ if __name__ == '__main__':
         e, f = np.linalg.eig(interact._A)
         _, i1 = sort_results(e, f, 'numpy')
 
+    #solve interacting and non interacting for omega = 1
     if (do_compare_2 == True):
         #wave functions for non interacting potnential for two particle
         noninteract = Rotation_Object(100, potential = 'non interact', omega = 1, start = 0, stop = 4)
@@ -453,6 +472,7 @@ if __name__ == '__main__':
         e, f = np.linalg.eig(interact._A)
         _, i2 = sort_results(e, f, 'numpy')
 
+    #solve interacting and non interacting for omega = 5
     if (do_compare_3 == True):
         #wave functions for non interacting potnential for two particle
         noninteract = Rotation_Object(100, potential = 'non interact', omega = 5, start = 0, stop = 2)
@@ -467,15 +487,7 @@ if __name__ == '__main__':
         e, f = np.linalg.eig(interact._A)
         _, i3 = sort_results(e, f, 'numpy')
 
-    if (do_interact_numpy == True):
-        obj = Rotation_Object(50, potential = 'repulsive', omega = .01, start = 0, stop = 50)
-        obj.build
-        xpoints = obj.xvec
-        g, h = np.linalg.eig(obj._A)
-        eval2, evec2 = sort_results(g, h, 'numpy')
-        print('Eval jacobi= ', eval2)
-        print('Evec jacobi= ', evec2[:,0])
-
+    #make plots for eigenfunctions
     if (plot_compare == True):
         fig0 = plt.figure()
         plt.title(r'Eigenfunction for $\omega = 0.01$')
@@ -521,6 +533,7 @@ if __name__ == '__main__':
         fig3.savefig('omega5.png')
         plt.show()
 
+    #print out eigenvalues for bucking beam problem to be compared against known values
     if (eval_accuracy == True):
         t0 = time.time()
         a, b, c = one_particle_accuracy(100, 0, 5, 1, algo = 'jacobi', maxnondiag = 1.0E8, tol = 1.0E-10, maxiter = 1.0E5)
