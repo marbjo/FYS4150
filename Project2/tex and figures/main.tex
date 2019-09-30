@@ -65,7 +65,7 @@
 
 \begin{document}
 
-\title{Comparing efficiency of different algorithms for solving sets of linear equations}
+\title{Evaluating the Jacobi method, efficiency and applications}
 
 \author{Bruce Chappell and Markus Bjørklund}
 
@@ -75,14 +75,14 @@
   Oslo, P.O.\ Box 1029 Blindern, N-0315 Oslo, Norway}
 
 \begin{abstract}
-In this letter we investigate numerical solutions to Eigenvalue problems, specifically the buckling beam two point boundary value problem and the Schrödinger equation in one dimension.
+In this letter we investigate numerical solutions to Eigenvalue problems, specifically the buckling beam two point boundary value problem and the Schrödinger equation in one dimension, applying the Jacobi rotation algorithm. The results show that while Jacobi's algorithm is very elegant and produces correct results, it is very slow and too inconvenient for problems requiring better resolution or bigger matrices. One advantage of the Jacobi method, and other algorithms which use the concept of similarity transformations, is however that they conserve the orthogonality of the Eigenvectors.
 
 \end{abstract}
 \keywords{Jacobi method --- Linear algebra: Eigensolvers --- methods: computational}
 
 \section{Introduction}
 \label{sec:introduction}
-In this project we will solve the general wave equation for the buckling beam problem and the Schrödinger equation for interacting and non-interacting electrons in a potential well. We will solve these systems by formulating them as eigenvalue problems. On the numerical side, we will study Jacobi's method for rotating matrices to find their eigenvalues and eigenvectors.
+Many problems in the natural sciences can be discretized and approximated into an Eigenvalue problem. It is therefore of high importance to have efficient algorithms for these types of problems. In this project we will solve the general wave equation for the buckling beam problem and the Schrödinger equation for interacting and non-interacting electrons in a potential well. We will solve these systems by formulating them as eigenvalue problems. On the numerical side, we will study Jacobi's method for rotating matrices to find their eigenvalues and eigenvectors. We have presented theory for the relevant equations and algorithm in the theory section and discussed the numerical approach in the method section. The next section presents our results, with a focus on CPU runtime and numerical output. Closing thoughts are given in the conclusions and further research sections.
 
 \section{Theory}
 \label{sec:method}
@@ -264,6 +264,10 @@ It can be shown, if you choose to zero out the largest off-diagonal element, tha
 \section{Methods}
 \label{sec:methods}
 This section will describe the methods we utilized to acquire our results.
+
+\subsection{Code}
+The code used to aquire the results in this report comes from the program \textit{main.py}. There is also a working c++ implementation, consisting of the program \textit{Jacobi.cpp} and the plotting program \textit{plot.py}, however it is slightly unfinished, so we chose to use the python implementation.
+
 \subsection{Algorithm}
 The program used to solve these eigenvalue problems uses a class to create an object that has methods to build the matrix in Eq 17 and implement Jacobi's Method. This class allows the user to select which potential to add along the diagonal: 0 for the buckling beam, $\omega^2 \rho^2$ for the non interacting system of two electrons, and $\omega^2 \rho^2 + \frac{1}{\rho}$ for the interacting system of two electrons. The methods programmed to perform the rotation are heavily based off of code found in [1]. After obtaining the eigeinvalues and eigenvectors for a given potential, number of iterations, and $\rho_{max}$, we plotted the first eigenvectors and repeated for different parameters. We also implemented a function to compare the computing time for Jacobi's Method and the Numpy linalg.eig function. This function compared the two times for the buckling beam problem for matrices of varying size. Another class was also used to create a fixed $4x4$ matrix which could then be used in our unit tests.
 \subsection{Parameter Selection}
@@ -278,7 +282,7 @@ $\rho_{max}$ & 45 & 5 & 4 & 2 \\
 \end{tabular}
 \end{center}
 \subsection{Unit Tests}
-To ensure or code was functioning properly, we implemented two unit tests at the beginning of the main program. The first unit test performed the $offdiagmax$ on a hard coded matrix with a max element at [0,3] and checked to make sure the function returned the right index for the maximum element. This is shown in the psuedo code bellow:
+To ensure or code was functioning properly, we implemented two unit tests at the beginning of the main program. The first unit test applied the function \textit{offdiagmax} on a hard coded matrix with a max element at [0,3] and checked to make sure the function returned the right index for the maximum element. This is shown in the psuedo code bellow:
 \begin{lstlisting}[language=Python]
 def diagonal_unit_test():
     A = Test_object()
@@ -345,35 +349,31 @@ The ground state eigenvectors were then found for potentials of various angular 
     \caption{Ground state eigenvectors for interacting and non-interacting particles in a potential well with angular frequency $\omega = 5$.}
     \label{fig:6}
 \end{figure}
-\\
-\\
+
 \section{Discussion}
 \label{sec:discussion}
 The speed of the Jacobi Method is very dependant on the size of the matrix that is to be rotated. As seen in Fig 1, Numpy's eigenvalue solver is much more efficient as the size of the matrix is increased. The inefficiency of Jacobi's method is reasonable considering how the required iterations to converge to a solution scale with the size of the matrix. While it does give us accurate results when compared with the Numpy solver, speed is a problem. for this reason we used the Numpy function to solve for the ground state eigenvectors in Figures 3-6. With low angular frequency and a wider potential well, the ground state functions spread out. As the frequency is increased, the wave functions become stepper and less spread because the potential increases and does a better job of confining the particles. It is also shown that the wave function for the interacting electrons is always wider than that of the non interacting particles. This is a result of the coloumb potential always trying to keep the particles away from each other, thus spreading out the wave function.
 
 \section{Conclusions}
 \label{sec:conclusions}
-We have studied the efficiency of the Jacobi method and examined solutions to the Schrödinger equation for a two electron system. The Jacobi method gave us sensible answers, but it was extremely inefficient in terms of run time. We used the Numpy eigenvalue solver to study how the Schrödinger equation for a two electron system in a harmonic oscillator potential. As we increase and decrease $\omega$, the electrons move closer together and farther apart respectively.
+We have studied the efficiency of the Jacobi method and examined solutions to the Schrödinger equation for a two electron system. The Jacobi method gave us sensible answers, but it was extremely inefficient in terms of run time. There is also the problem of memory usage, as you need to store several full matrices for applying the rotational matrices. We used the Numpy eigenvalue solver to study how the Schrödinger equation for a two electron system in a harmonic oscillator potential. As we increase and decrease $\omega$, the electrons move closer together and farther apart respectively.
 
 
 \subsection{Further research}
 As a continuation of this project, we could examine wave function behavior for types of potentials other than the harmonic oscillator. We could also compare our result with the analytical solution found in [3].
 
-\\
-\\
-\\
 \newpage
 \begin{thebibliography}{}
-\bibitem{Lecture}[(Hjorth-Jensen, 2018)]{MHJ} Hjorth-Jensen, Morten \, Sep 15 2017, "Computational Physics Lectures:Eigenvalue problems" , http://compphysics.github.io/ComputationalPhysics/doc/pub/eigvalues/pdf/eigvalues-print.pdf
+\bibitem{Lecture}[(Hjorth-Jensen, 2018)]{MHJ} Hjorth-Jensen, Morten \, Sep 15 2017, "Computational Physics Lectures:Eigenvalue problems" , \url{http://compphysics.github.io/ComputationalPhysics/doc/pub/eigvalues/pdf/eigvalues-print.pdf}
 
 \bibitem{Project}[(Hjorth-Jensen, 2018)]{MHJ} Hjorth-Jensen, Morten \, Sep 6 2018, "Project 2"
-http://compphysics.github.io/ComputationalPhysics/doc/Projects/2019/Project2/pdf/Project2.pdf
+\url{http://compphysics.github.io/ComputationalPhysics/doc/Projects/2019/Project2/pdf/Project2.pdf}
 
 \bibitem{Paper}[(Taut, 1993)] Taut, M. (1993). Two electrons in an external oscillator potential: Particular analytic solutions of a Coulomb correlation problem. Phys Rev., A 48,3561
 
 \end{thebibliography}
 
 \section{Appendix}
-All source code, data and figures can be found at the github repository: https://github.com/bruce-chappell/FYS4150/tree/master/project1
+All source code, data and figures can be found at the github repository: https://github.com/marbjo/FYS4150/tree/master/Project2
 
 \end{document}
