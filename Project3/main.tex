@@ -1,0 +1,138 @@
+\documentclass{emulateapj}
+%\documentclass[12pt,preprint]{aastex}
+
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{epsfig,floatflt}
+\usepackage{hyperref}
+\usepackage[toc, page]{appendix}
+\usepackage{verbatim, amsmath, amsfonts, amssymb, amsthm}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{color}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage[export]{adjustbox}
+\usepackage{calc}
+
+\usepackage{accents}
+\newcommand{\dbtilde}[1]{\accentset{\approx}{#1}}
+\newcommand{\vardbtilde}[1]{\tilde{\raisebox{0pt}[0.85\height]{$\tilde{#1}$}}}
+
+\usepackage{lipsum}
+\usepackage[para]{footmisc}
+
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+	backgroundcolor=\color{white}\ttfamily\tiny,   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+	basicstyle=\tiny,        % the size of the fonts that are used for the code \footnotesize,
+	breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+	columns=fullflexible,    %no spaces between columns
+	keepspaces=true,
+	breaklines=true,                 % sets automatic line breaking
+	breakatwhitespace=true,
+	captionpos=b,                    % sets the caption-position to bottom
+	commentstyle=\color{mygreen},    % comment style
+	deletekeywords={...},            % if you want to delete keywords from the given language
+	escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+	extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+	frame=single,	                   % adds a frame around the code
+	keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+	keywordstyle=\color{blue},       % keyword style
+	language=Python,                 % the language of the code
+	morekeywords={*,...},           % if you want to add more keywords to the set
+	%numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+	%numbersep=5pt,                   % how far the line-numbers are from the code
+	%numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+	rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+	showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+	showstringspaces=false,          % underline spaces within strings only
+	showtabs=false,                  % show tabs within strings adding particular underscores
+	stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+	stringstyle=\color{mymauve},     % string literal style
+	tabsize=1,	                   % sets default tabsize to 2 spaces
+	%title=\lstname                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+
+\begin{document}
+
+\title{Numerical integration - An empirical study of Gaussian quadrature and Monte Carlo}
+
+\author{Bruce Chappell and Markus Bjørklund}
+
+\email{markus.bjorklund@astro.uio.no}
+
+\altaffiltext{1}{Institute of Theoretical Astrophysics, University of
+  Oslo, P.O.\ Box 1029 Blindern, N-0315 Oslo, Norway}
+
+\begin{abstract}
+
+Briefly what we are doing with what methods, and summary of the main results.
+
+\end{abstract}
+\keywords{Numerical integration --- Guassian quadrature --- Monte Carlo methods}
+
+\section{Introduction}
+\label{sec:introduction}
+Brief overview of motivation, what problems we are actually solving, and overview of what is in the following sections.
+
+
+\section{Theory}
+\label{sec:method}
+
+
+\section{Methods}
+\label{sec:methods}
+This section will describe the methods we utilized to acquire our results.
+
+\subsection{Code}
+
+
+\subsection{Algorithm}
+
+\subsection{Parameter Selection}
+
+\subsection{Unit Tests}
+
+
+\section{Results}
+\label{sec:results}
+
+
+\section{Discussion}
+\label{sec:discussion}
+
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+
+
+\subsection{Further research}
+
+
+\newpage
+\begin{thebibliography}{}
+
+\bibitem{Lecture}[(Hjorth-Jensen, 2017)]{MHJ} Hjorth-Jensen, Morten \, Aug 23 2017, "Computational Physics Lectures:Numerical integration, from Newton-Cotes quadrature to Gaussian quadrature" , \url{http://compphysics.github.io/ComputationalPhysics/doc/pub/integrate/pdf/integrate-print.pdf}
+
+\bibitem{Lecture}[(Hjorth-Jensen, 2019)]{MHJ} Hjorth-Jensen, Morten \, Oct 4 2019, "Computational Physics Lectures: Introduction to Monte Carlo methods" , \url{http://compphysics.github.io/ComputationalPhysics/doc/pub/mcint/pdf/mcint-print.pdf}
+
+\bibitem{Project}[(Hjorth-Jensen, 2019)]{MHJ} Hjorth-Jensen, Morten \, Oct 2019, "Project 3"
+\url{http://compphysics.github.io/ComputationalPhysics/doc/Projects/2019/Project3/pdf/Project3.pdf}
+
+\end{thebibliography}
+
+\section{Appendix}
+All source code, data and figures can be found at the github repository: \url{https://github.com/marbjo/FYS4150/tree/master/Project3}
+
+\end{document}

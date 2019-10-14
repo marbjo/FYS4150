@@ -103,13 +103,13 @@ double int_function(double x1, double y1, double z1, double x2, double y2, doubl
 // double gammln(double);
 
 int main(){
-    int n = 20;
+    //int n = 20;
 
-    //double dx = 0.1;
+    double dx = 0.1;
     double lambda = 2. ;
 
 
-    //int n = 2*gamma / dx +1;
+    int n = 2*lambda / dx +1;
     double a = -lambda;
     double b = lambda;
 
