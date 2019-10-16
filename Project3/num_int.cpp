@@ -5,6 +5,7 @@
 #include <random>
 #include <string>
 #include <fstream>
+// #include <omp.h>
 #define ZERO 1.0E-10
 #define EPS 3.0e-14
 #define MAXIT 10
@@ -161,6 +162,68 @@ void gauss_laguerre(double *x, double *w, int n, double alf){
 	}
 }
 
+void test_laguerre(){
+  /*
+  table values taken from https://keisan.casio.com/exec/system/1281279441
+  */
+
+  double *x = new double [4];
+  double *w = new double [4];
+  double table_val_x [] = {0,1.5173871,4.3115831,9.1710298};
+  double table_val_w [] = {0,1.0374950,0.9057500,0.0567550};
+  double tol = 10E-8;
+  double diff_x;
+  double diff_w;
+
+  gauss_laguerre(x, w, 3, 2);
+
+  for (int i = 0; i <= 3; i++){
+    diff_x = abs(x[i] - table_val_x[i]);
+    diff_w = abs(w[i] - table_val_w[i]);
+    if (diff_x <= tol){
+      // PASS
+    }
+    if (diff_w <= tol){
+      // PASS
+    }
+    else{
+      cout << "Laguerre solver not returning proper weights and integration points" << endl;
+      exit(1);
+    }
+  }
+}
+
+void test_legendre(){
+  /*
+  table values taken from https://keisan.casio.com/exec/system/1280624821
+  */
+
+  double *x = new double [4];
+  double *w = new double [4];
+  double table_val_x [] = {-0.86113631,-0.33998104,0.33998104,0.86113631};
+  double table_val_w [] = {0.34785485,0.65214515,0.65214515,0.34785485};
+  double tol = 10E-8;
+  double diff_x;
+  double diff_w;
+
+  gauss_legendre(-1, 1, x, w, 4);
+
+  for (int i = 0; i < 4; i++){
+    diff_x = abs(x[i] - table_val_x[i]);
+    diff_w = abs(w[i] - table_val_w[i]);
+    if (diff_x <= tol){
+      // PASS
+    }
+    if (diff_w <= tol){
+      // PASS
+    }
+    else{
+      cout << "Lengendre solver not returning proper weights and integration points" << endl;
+      exit(1);
+    }
+  }
+}
+
 // solving methods
 double brute_force(int N, double a, double b){
   //N = number of integration points
@@ -207,7 +270,7 @@ double improved_gauss(int N){
 
   gauss_legendre(0, pi, theta, wtheta, N);
   gauss_legendre(0, 2*pi, phi, wphi, N);
-  gauss_laguerre(u, wu, N+1, alf);
+  gauss_laguerre(u, wu, N, alf);
 
   for (int i = 1; i <= N; i++){
     for (int j = 1; j <= N; j++){
@@ -235,7 +298,9 @@ double improved_gauss(int N){
 }
 
 tuple<double, double> brute_monte(int N, double a, double b){
-
+  /*
+  monte carlo integration just using uniform distribution
+  */
   mt19937 generate(2019);
   uniform_real_distribution<double> my_dist(a,b);
 
@@ -271,7 +336,11 @@ tuple<double, double> brute_monte(int N, double a, double b){
 }
 
 tuple<double,double> improved_monte(int N){
-  // random distributions exp_dist has form e^-(a*x)
+  /*
+  use exp_dist of form e^-(a*x) for exponential piece and
+  uniform dist for angular pieces
+  */
+
   mt19937 generate(2019);
   exponential_distribution<double> u_dist(1);
   uniform_real_distribution<double> theta_dist(0,M_PI);
@@ -287,7 +356,7 @@ tuple<double,double> improved_monte(int N){
   double MCintsqr;
   double fx;
   double scale = (4*M_PI*M_PI*M_PI*M_PI); // same theory as previously. rescaling uniform  dist for angles
-                                          // with (b-a) for each angle integral
+                                          // with (b-a) contirubtion from  each angle integral
 
   MCint = MCintsqr = 0;
 
@@ -315,12 +384,14 @@ void timing_function(int N, bool quad_solve, int M, bool monte_solve){
   It will do montecarlo simulation for 10^i points in the range i = 1... i=M.
   It then prints out values from solving:
 
-  quadrature: intergration points - legendre results - legendre time - laguerre results - laguerre lag_time
+  quadrature: intergration points - legendre results -%error - legendre time - laguerre results -%error - laguerre lag_time
 
-  montecalro: points - results - variance - time - improved results - improved variance - improved lag_time
+  montecalro: points - results - %error - variance - time - improved results - %error - improved variance - improved lag_time
               (improved means we used importance sampling)
   results are printed to two output files
   */
+  double analytic = (5*M_PI*M_PI)/(16*16);
+
   ofstream montefile;
 
   if (quad_solve == true){
@@ -355,8 +426,10 @@ void timing_function(int N, bool quad_solve, int M, bool monte_solve){
     for (int i = 0; i < N/5; i++){
       quadfile << setw(15) << setprecision(8) << points[i];
       quadfile << setw(15) << setprecision(8) << leg_results[i];
+      quadfile << setw(15) << setprecision(8) << abs((leg_results[i]-analytic)/analytic);
       quadfile << setw(15) << setprecision(8) << leg_time[i];
       quadfile << setw(15) << setprecision(8) << lag_results[i];
+      quadfile << setw(15) << setprecision(8) << abs((lag_results[i]-analytic)/analytic);
       quadfile << setw(15) << setprecision(8) << lag_time[i] << endl;
     }
     quadfile.close();
@@ -408,13 +481,23 @@ void timing_function(int N, bool quad_solve, int M, bool monte_solve){
     for (int i = 0; i < M; i++){
       montefile << setw(15) << setprecision(8) << points[i];
       montefile << setw(15) << setprecision(8) << bad_monte_results[i];
+      montefile << setw(15) << setprecision(8) << abs((bad_monte_results[i]-analytic)/analytic);
       montefile << setw(15) << setprecision(8) << bad_monte_var[i];
       montefile << setw(15) << setprecision(8) << bad_monte_time[i];
       montefile << setw(15) << setprecision(8) << better_monte_results[i];
+      montefile << setw(15) << setprecision(8) << abs((better_monte_results[i]-analytic)/analytic);
       montefile << setw(15) << setprecision(8) << better_monte_var[i];
       montefile << setw(15) << setprecision(8) << better_monte_time[i]<< endl;
     }
     montefile.close();
+
+    delete [] points;
+    delete [] bad_monte_results;
+    delete [] bad_monte_var;
+    delete [] bad_monte_time;
+    delete [] better_monte_results;
+    delete [] better_monte_var;
+    delete [] better_monte_time;
   }
 
 
@@ -427,6 +510,9 @@ int main(int argc, char const *argv[]) {
   bool brute_m = false;
   bool better_m = false;
   double analytic = (5*M_PI*M_PI)/(16*16);
+
+  test_laguerre();
+  test_legendre();
 
   if (brute_q == true){
     double a = lambda_limit(2,10E-5);
@@ -453,7 +539,8 @@ int main(int argc, char const *argv[]) {
     cout << "variance= " << get<1>(a) << endl;
     cout <<"true value= " << analytic << endl;
   }
-  timing_function(20, true, 7, true);
+  timing_function(35, true, 7, true);
+
 
   return 0;
 }
