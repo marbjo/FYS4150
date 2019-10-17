@@ -505,7 +505,7 @@ void timing_function(int N, bool quad_solve, int M, bool monte_solve){
 
 int main(int argc, char const *argv[]) {
 
-  bool brute_q = false;
+  bool brute_q = true;
   bool better_q = false;
   bool brute_m = false;
   bool better_m = false;
@@ -517,8 +517,16 @@ int main(int argc, char const *argv[]) {
   if (brute_q == true){
     double a = lambda_limit(2,10E-5);
     cout << "int limits= " << a << endl;
-    double b = brute_force(35, -a ,a);
-    cout << "this is stuff= " << b << endl;
+
+    clock_t start, stop;
+    start = clock();
+    double b = brute_force(60, -a ,a);
+    stop = clock();
+    double timing = ((double) (stop-start))/CLOCKS_PER_SEC;
+    double error = abs(b-analytic)/analytic;
+    cout << "integral= " << b << endl;
+    cout << "error= " << error << endl;
+    cout << "time= " << timing << endl;
   }
   if (better_q == true){
     double a = improved_gauss(25);
@@ -539,7 +547,7 @@ int main(int argc, char const *argv[]) {
     cout << "variance= " << get<1>(a) << endl;
     cout <<"true value= " << analytic << endl;
   }
-  timing_function(35, true, 7, true);
+  // timing_function(35, true, 7, true);
 
 
   return 0;

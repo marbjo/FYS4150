@@ -94,12 +94,12 @@ Brief overview of motivation, what problems we are actually solving, and overvie
 \label{sec:methods}
 In this section we will describe the methods we utilized to acquire our results.
 \subsection{Code}
-The code used to acquire the results in this report come from the C++ program [CODE NAME!]. This file executes various numerical integration methods, runs unit tests, and prints results to text files. There is also a python file [CODE NAME!] that is used to visually interpret the resulting data.
+The code used to acquire the results in this report comes from the C++ program $[num_int.c++]$. This file executes various numerical integration methods, runs unit tests, and prints results to text files. There is also a python file [plot.py] that is used to put the data into easy to handle Pandas dataframes.
 
 \subsection{Algorithm}
-The C++ program [CODE NAME!] solves one integration problem using four different methods: Gauss-Legendre Quadrature, a mix of Gauss-Legendre and Gauss-Laguerre Quadrature, Monte-Carlo integration using the uniform distribution, and Monte-Carlo integration using importance sampling.
+The C++ program [CODE NAME!] solves one integration problem using four different methods: Gauss-Legendre Quadrature, a mix of Gauss-Legendre and Gauss-Laguerre Quadrature which we will call Improved Gaussian Quadrature, Monte-Carlo integration using the uniform distribution, and Monte-Carlo integration using importance sampling.
 \subsubsection{Quadrature}
-For the less elegant Gaussian Quadrature methods, we use functions $gauss_legendre$ and $gauss_laguerre$ found in [SITE WHERE FUNCTIONS COME FROM] to calculate the integration points and weights for both Gaussian-Legendre and Gaussian-Laguerre Quadrature. Brute force Gaussian Quadrature is done using the following pseudo code.
+For the less elegant Gaussian Quadrature methods, we use functions $gauss_legendre$ and $gauss_laguerre$ found in [SITE WHERE FUNCTIONS COME FROM] to calculate the integration points and weights for both Gaussian-Legendre and Improved Gaussian Quadrature. The brute force Gaussian-Legendre Quadrature is done using the following pseudo code.
 \begin{lstlisting}[language=c++]
 double brute_force(int N, double a, double b){
     double *x = new double [N];
@@ -115,7 +115,7 @@ double brute_force(int N, double a, double b){
                             * remainder(x[i],x[j],x[k],x[l],x[m],x[n]);
     }}}}}}}
 \end{lstlisting}
-Here we have integrated over all six spatial variable on the interval $[a,b]$ with $N$ integration points. $remainder()$ is the remaining function after dividing out the weight function from the function of interest and the selection of $a$ and $b$ will be discussed in Section \ref{subsec:parameters}. The above method is also used for solving our integral using Laguerre-Quadrature and spherical coordinates. The difference is that we use the $gauss_laguerre function$ to generate the weights for the radial dependency and the $gauss_legendre function$ to generate the weights for the angular equations.
+Here we have integrated over all six spatial Cartesian variables on the interval $[a,b]$ with $N$ integration points. $remainder()$ is the remaining function after dividing out the weight function from the function of interest and the selection of $a$ and $b$ will be discussed in Section \ref{subsec:parameters}. The above method is also used for solving our integral using Improved Gaussian Quadrature. We transform our integral to spherical coordinates and use the  the $gauss_laguerre$ function to calculate the integration points and weights for the radial dependency. For the angular dependencies, we use the $gauss_legendre$ function to get with weights and integration points for $\theta$ and $\phi$ on the intervals $[0,\pi]$ and $[0,2\pi]$ respectively. We now have a weight and points vector unique to each coordinate type and integrate over the six variables.
 \subsubsection{Monte-Carlo}
 We used the C++ function $mt19937$ to generate the seed for our distribution sampling. We then implemented the following pseudo code for a brute force approach to Monte-Carlo integration.
 \begin{lstlisting}[language=c++]
@@ -128,7 +128,7 @@ for (int i = 1; i <= N; i++){
     x2 = my_dist(generate);
     y2 = my_dist(generate);
     z2 = my_dist(generate);
-    fx = cartesian_f(x1,y1,z1,x2,y2,z2);
+    fx = whole_function(x1,y1,z1,x2,y2,z2);
     MCint += fx;
     MCintsqr += fx*fx;
 }
@@ -136,29 +136,113 @@ MCint = MCint*scale / ((double) N);
 MCintsqr = MCintsqr*scale*scale / ((double) N);
 double var = (MCintsqr - MCint*MCint) / ((double) N);
 \end{lstlisting}
-Here, the uniform distribution is used to generate all random points when solving. We must scale the resulting values by a factor of $(b-a)$ to account for a change of variables for the uniform distribution fro $[0,1]$ to $[a,b]$. To improve this method, we switched to spherical coordinates where we could exploit the exponential shape of the radial dependency and use the exponential distribution to generate the radial values. For the angular dependencies, we still used a scaled uniform distribution from $[0,\pi]$ and $[0,2\pi]$ for $\theta$ and $\phi$ respectively.
+Here, the uniform distribution is used to generate all random points when solving. We must scale the resulting values by a factor of $(b-a)$ to account for a change of variables for the uniform distribution from $[0,1]$ to $[a,b]$. To improve this method, we transformed the integral to spherical coordinates where we could exploit the exponential shape of the radial dependency and use the exponential distribution to generate the radial values. For the angular dependencies, we still used a scaled uniform distribution from $[0,\pi]$ and $[0,2\pi]$ for $\theta$ and $\phi$ respectively. The same routine of randomly generating a value for each variable and then solving the function using these values is followed for the spherical case.
 \subsection{Parameter Selection}
 \label{subsec:parameters}
-Since we are using numerical techniques to solve the integral described in [EQUATION], we must find a reasonable approximation for infinity. In our code, we have implemented a script to loop over $\lambda$ values until $e^{-2\alpha\lambda} < 1\times10^{-8}$ for $\alpha = 2$. The function described in [EQUATION] is radially symmetric so we will use $-\lambda$ and $\lambda$ for the upper and lower bounds when evaluating in Cartesian coordinates.
+Since we are using numerical techniques to solve the integral described in [EQUATION-CARTESIAN], we must find a reasonable approximation for infinity. In our code, we have implemented a script to loop over $\lambda$ values until $e^{-2\alpha\lambda} < 1\times10^{-5}$ for $\alpha = 2$. The function described in [EQUATION] is radially symmetric so we will use $-\lambda$ and $\lambda$ for the upper and lower bounds when evaluating in Cartesian coordinates. We also need to handle potential singular points arising from the denominator in [EQUATION-CARTESIAN] and [EQUATION-RADIAL]. In our solution, we chose to ignore points where the denominator is $\leq 10^{-10}$.
 \subsection{Unit Tests}
-Writing unit tests for this project proved to be slightly challenging. Since we know have the analytical answer to our integral from the start, we are essentially testing our methods each time we run the code and compare it to the analytical answer. The values of the weights and integration points are easily found in tabulated charts for both Laguerre and Legendre quadrature. In our code, we implement two tests to compare the weights and points generated by our functions compared to the tabulated values.
+Writing unit tests for this project proved to be slightly challenging. Since we know  the analytical answer to our integral from the start, we are testing our methods each time we run the code and compare it to the analytical answer. In a sense, this makes solving this specific integral a unit test of our methods. The values of the weights and integration points are easily found in tabulated charts for both Laguerre and Legendre quadrature. In our code, we implement two tests to compare the weights and points generated by the $gauss_legendre$ and $gauss_laguerre$ functions compared to the tabulated values.
 \subsection{Parallelization}
 FUUUUUUUUUUUUUUCK
 \section{Results}
 \label{sec:results}
+Using our function to find an approximation for infinity, we found reasonable integration limits to be [INT LIMITS]. The Gauss-Legendre Quadrature for varying numbers of integration points is as follows:
+\begin{table}[H]
+\centering
+\begin{tabular}{ |p{1.5cm}||p{1.5cm}|p{1.5cm}|p{1.5cm}|  }
+ \hline
+ \multicolumn{4}{|c|}{Gaussian-Legendre Quadrature} \\
+ \hline
+ Integration Points & Integral Value & Absolute Error & Runtime\\
+ \hline
+ 5 & 0.34613906 & 0.79564642 & 0.0006730\\
+ 10 & 0.11083694 & 0.42501733 & 0.0293350\\
+ 15 & 0.20963127 & 0.087492507 & 0.3302690 \\
+ 20 & 0.17162642 & 0.10966315 & 1.7916670 \\
+ 25 & 0.19037988 & 0.012376866 & 6.8354100\\
+ 30 & 0.18380124 & 0.046504468 & 20.476816\\
+ 35 & 0.18946931 & 0.017100542 & 51.388580\\
+ \hline
+\end{tabular}
+\caption{Gaussian-Legendre Quadrature Results}
+\label{table:1}
+\end{table}
+To achieve results accurate to three leading digits of the analytical solution, it took [RESULTS HERE]. This result illustrates the inefficiencies of brute force quadrature. By switching to spherical coordinates and using Laguerre-Quadrature for the radial dependency we were able to obtain better results shown in Table 2:
+\begin{table}[H]
+\begin{tabular}{ |p{2cm}||p{2cm}|p{2cm}|p{2cm}|  }
+ \hline
+ \multicolumn{4}{|c|}{Improved Gaussian Quadrature} \\
+ \hline
+ Integration Points & Integral Value & Absolute Error & Runtime\\
+ \hline
+ 5 & 0.17344965 & 0.10020488 & 0.0019270\\
+ 10 & 0.18645734 & 0.032725561 & 0.0945780\\
+ 15 & 0.18975898 & 0.015597842 & 1.0635580\\
+ 20 & 0.19108178 & 0.0087356352 & 5.9160350\\
+ 25 & 0.19174074 & 0.0053171840 & 22.829351\\
+ 30 & 0.19211371 & 0.0033823409 & 67.605018\\
+ 35 & 0.19234330 & 0.0021913142 & 169.90126\\
+ \hline
+\end{tabular}
+\caption{Improved Gaussian-Quadrature Results}
+\label{table:2}
+\end{table}
+Here, we approach the analytical solution with fewer integration points but at the expense of speed. We then implement Monte-Carlo integration over Cartesian integration boundaries using the uniform distribution to generate our random points.
+\begin{table}[H]
+\begin{tabular}{ |p{1.5cm}||p{1.5cm}|p{1.5cm}|{p1.5cm}|p{1.5cm}| }
+ \hline
+ \multicolumn{5}{|c|}{Brute Force Monte-Carlo} \\
+ \hline
+ Integration Points & Integral Value & Absolute Error & Variance & Runtime\\
+ \hline
+ 10       & 0.0057756332 & 0.97003807  & 2.0627118E-05 & 1.100E-05\\
+ 100      & 0.15430809   & 0.19950449  & 0.021491537   & 6.000E-05\\
+ 1000     & 0.14230329   & 0.26178113  & 0.0060039768  & 0.0005110\\
+ 10000    & 0.46626073   & 1.4187950   & 0.067977321   & 0.0047580\\
+ 100000   & 0.20297467   & 0.052960428 & 0.0014132859  & 0.0391260\\
+ 1000000  & 0.21497585   & 0.11521831  & 0.00039684405 & 0.3972480\\
+ 10000000 & 0.20483706   & 0.062621868 & 3.8399567E-05 & 3.9720560\\
+ \hline
+\end{tabular}
+\caption{Monte-Carlo results using Cartesian Coordinates and Uniform Distribution}
+\label{table:3}
+\end{table}
+These results are much better, both when considering runtime and absolute error. We further fine tune our results by converting to spherical coordinates and sampling from distributions which better fit our data. These results are shown in Table 4.
+\begin{table}[H]
+\begin{tabular}{ |p{1.5cm}||p{1.5cm}|p{1.5cm}|{p1.5cm}|p{1.5cm}| }
+ \hline
+ \multicolumn{5}{|c|}{Improved Monte-Carlo} \\
+ \hline
+ Integration Points & Integral Value & Absolute Error & Variance & Runtime\\
+ \hline
+ 10       & 0.023022455  & 0.88056769    & 0.00014693022 & 1.200E-05\\
+ 100      & 0.56101114   & 1.9103264     & 0.20718558    & 6.600E-05\\
+ 1000     & 0.19064793   & 0.010986317   & 0.0025355519  & 0.0006310\\
+ 10000    & 0.18608869   & 0.034638011   & 8.8177499E-05 & 0.0053960\\
+ 100000   & 0.18785356   & 0.025482505   & 8.5227310E-06 & 0.0481520\\
+ 1000000  & 0.19220561   & 0.0029055834  & 9.9038990E-07 & 0.5038370\\
+ 10000000 & 0.19287860   & 0.00058561729 & 1.0340901E-07 & 4.8266750\\
+ \hline
+\end{tabular}
+\caption{Monte-Carlo results using Spherical Coordinates and Importance Sampling}
+\label{table:4}
+\end{table}
+
+paralleization comparison
+
 
 
 \section{Discussion}
 \label{sec:discussion}
-
+-------
 
 \section{Conclusions}
 \label{sec:conclusions}
-
+--------
 
 
 \subsection{Further research}
-
+------
 
 \newpage
 \begin{thebibliography}{}
