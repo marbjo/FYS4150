@@ -88,7 +88,151 @@ Brief overview of motivation, what problems we are actually solving, and overvie
 
 \section{Theory}
 \label{sec:method}
+The problem in question is that of determining the ground state correlation energy between two electrons in a helium atom. Our first assumption is that each electron behaves according to the single-particle wave function for an electron in the hydrogen atom, albeit not normalized, given as
 
+\[
+   \psi_{1s}({\bf r}_i)  =   e^{-\alpha r_i},
+\]
+where
+\[
+   {\bf r}_i =  x_i {\bf e}_x + y_i {\bf e}_y +z_i {\bf e}_z ,
+\]
+and
+\[
+r_i = \sqrt{x_i^2+y_i^2+z_i^2}.
+\]
+
+Here, $\alpha$ is a parameter. We fix $\alpha$ as a parameter denoting the charge, and in the case of the helium atom, we have $\alpha = 2$. Our ansatz for the combined wave function is that it is given by the product of the individual wave functions
+\[
+   \Psi({\bf r}_1,{\bf r}_2)  =   e^{-2 (r_1+r_2)}.
+\]
+Then, the correlation energy, and the integral we wish to solve, is defined as
+\begin{equation}\label{eq:correlationenergy}
+   \langle \frac{1}{|{\bf r}_1-{\bf r}_2|} \rangle =
+   \int_{-\infty}^{\infty} d{\bf r}_1d{\bf r}_2  e^{-4 (r_1+r_2)}\frac{1}{|{\bf r}_1-{\bf r}_2|}.
+\end{equation}
+This is a six dimensional integral, and has the closed form analytical solution
+\[
+\langle \frac{1}{|{\bf r}_1-{\bf r}_2|} \rangle = \frac{5\pi^2}{16^2}
+\]
+
+\subsection{Gaussian quadrature}
+Our first approach is to integrate using Gaussian quadrature. Gaussian quadrature, unlike Newton-Cotes methods, generally have non-evenly spaced integration points $\{x_0 , x_1 , \dots , x_{N-1}\}$, given by the zeros of an orthogonal polynomial. The integral is then approximated by
+\begin{equation}
+	I = \int_a^b f(x) dx \approx \sum^N_{i = 1} \omega_i f(x_i),
+	\label{eq:quadrature}
+\end{equation}
+where $\omega_i$ are the integration weights.
+
+\subsubsection{Integration points and weights}
+There are N integration points and N integration weights. We must therefore approximate the function with a polynomial of degree $2N-1$, $f(x) \approx P_{2N-1}$ to find them. Gaussian quadrature is exact when integrating a polynomial (up to the same degree), and we get
+
+\begin{align}
+	I \approx \int P_{2N-1}(x)dx = \sum^{N-1}_{i=0}P_{2N-1}(x_i) \omega_i.
+\end{align}
+
+The idea is to expand this polynomial in terms of some (often known) other polynomial of degree N through polynomial division. The choice of polynomial depends on the integration limits, which sets the scope of the orthogonal polynomial. We use the Legendre polynomial $L_N(x)$ here, which is orthogonal for $x\in [-1,1]$, but the argument is valid for all orthogonal polynomials.
+\begin{equation}
+	P_{2N-1} = L_N(x)P_{N-1}(x) + Q_{N-1}(x),
+\end{equation}
+where $Q_{N-1}(x)$ is the remainder from the polynomial division. It can be shown that the weights are given by
+
+\begin{equation}
+    w_i = 2\left(\hat{L}^{-1}\right)_{0,i},
+\end{equation}
+where $\hat{L}$ is the matrix
+\begin{equation*}
+   \hat{L}=\left(\begin{array} {cccc} L_0(x_0)  & L_1(x_0) &\dots &L_{N-1}(x_0)\\
+                                   L_0(x_1)  & L_1(x_1) &\dots &L_{N-1}(x_1)\\
+                                   \dots  & \dots &\dots &\dots\\
+L_0(x_{N-1})  & L_1(x_{N-1}) &\dots &L_{N-1}(x_{N-1})
+\end{array}\right),
+\end{equation*}
+and the integration points $x_i$ are the zeros of the polynomial $L_N$. For a full derivation, see \cite{Lecture1}. For the general case of limits
+\begin{equation}
+    \int_a^b f(t) dt,
+\end{equation}
+one can always perform the mapping $t = \frac{b-a}{2}x + \frac{b+a}{2}$ to obtain
+
+\begin{equation*}
+  \int_a^bf(t)dt=\frac{b-a}{2}\int_{-1}^1f\left(\frac{(b-a)x}{2}+\frac{b+a}{2}\right)dx.
+\end{equation*}
+
+\subsection{Transformation to spherical coordinates}
+Our original integral is not well suited for the use of Legendre polynomials. It would therefore be reasonable to perform a transformation to spherical coordinates, and employ the Laguerre polynomials, which are orthogonal on the interval $[0,\infty)$. The Laguerre polynomials are well suited to solve integrals on the form
+\begin{equation}
+    \int_0^\infty f(x) e^{-x} dx.
+\end{equation}
+
+In spherical coordinates, the new differentials become
+\begin{align*}
+    d\vec{r}_1d\vec{r}_2 &= r_1^2r_2^2 dr_1dr_2 d\cos(\theta_1)d\cos(\theta_2) d\phi_1d\phi_2 \\
+    &= r_1^2r_2^2 dr_1dr_2\sin(\theta_1)\sin(\theta_2)d\theta_1d\theta_2d\phi_1d\phi_2
+\end{align*}
+and the distance between the electrons is given by
+\begin{equation*}
+|\vec{r}_1 - \vec{r}_2| = \sqrt{r_1^2 + r_2^2 - 2r_1r_2cos(\beta)},
+\end{equation*}
+where
+\begin{equation*}
+cos(\beta) = cos(\theta_1)\cos(\theta_2) + \sin(\theta_1)\sin(\theta_2)\cos(\phi_1 - \phi_2).
+\end{equation*}
+
+We introduce the substitution $u = 2\alpha r$, such that $r^2 = \frac{u^2}{4\alpha^2}$ and $dr = \frac{du}{2\alpha}$. Inserting all this, we get the integral
+\begin{equation}
+    I = \frac{1}{32\alpha^5}\int_0^\pi \int_0^\pi \int_0^{2\pi} \int_0^{2\pi} \int_0^{\infty} \int_0^{\infty} f du_1 du_2 d\phi_1 d\phi_2 d\theta_1 d\theta_2,
+\end{equation}
+where
+\begin{equation}
+    f = \frac{u_1^2 u_2^2 sin\left(\theta_1\right) sin\left(\theta_2\right) e^{-\left(u_1+u_2\right)}}{\sqrt{u_1^2 + u_2^2 - 2u_1u_2cos\left(\beta\right)}}.
+\end{equation}
+with new limits $\theta_{1,2} \in [0,\pi]$, $\phi_{1,2} \in [0,2\pi]$ and $r_{1,2} \in [0,\infty)$ as per usual in spherical coordinates. Thus, it is appropriate to use Laguerre polynomials for the radial part, and Legendre polynomials with a mapping to $[-1,1]$ for the angular parts.
+
+\subsection{Monte Carlo integration}
+The idea behind Monte Carlo integration is that we can approximate an integral
+
+\begin{equation} \label{eq:MC}
+    \int_a^b f\left(x\right) P\left(x\right) \approx \frac{1}{N}\sum_{i=0}^{N-1} f\left(x_i\right),
+\end{equation}
+where $x_i$ is drawn from the probability distribution $P\left(x\right)$, and N denotes the number of samples. For the case where there is no known distribution inside the integral, one must choose one, I.E.
+
+\begin{equation}
+    \int_a^b f\left(x\right) = \int_a^b \frac{f\left(x\right)}{P\left(x\right)}P\left(x\right) dx \equiv \int_a^b g\left(x\right) P\left(x\right) dx.
+\end{equation}
+Assuming a uniform distribution,
+\begin{equation}
+    P_\text{uniform}(x) = \frac{1}{b-a}\theta\left(x-a\right)\theta\left(b-x\right),
+\end{equation}
+where $\theta$ denotes the Heaviside step function, we get
+
+\begin{equation}
+    \int_a^b f(x) dx = \left(b-a\right) \int_a^b f(x) P_\text{uniform}(x) dx.
+\end{equation}
+In the case of the correlation energy, we have $(a,b) = (-\infty,\infty)$, a 6-dimensional integral and our original integrand as given in equation \ref{eq:correlationenergy}. Thus we need to again approximate the limits as $(-\lambda,\lambda)$, and we get
+
+\begin{align*}
+    I &= \left(2\lambda\right)^6 \int_{-\lambda}^{\lambda} d{\bf r}_1d{\bf r}_2  e^{-4 (r_1+r_2)}\frac{1}{|{\bf r}_1-{\bf r}_2|} P_\text{uniform}({\bf r}_1, {\bf r}_2) \\
+    &= \left(2\lambda\right)^6 \int_{-\lambda}^{\lambda} d{\bf r}_1d{\bf r}_2 f({\bf r}_1, {\bf r}_2) P_\text{uniform}({\bf r}_1, {\bf r}_2)
+\end{align*}
+Thus, we can apply Monte Carlo integration by the relation in equation \ref{eq:MC}, and obtain that
+\begin{equation}
+    I \approx \frac{\left(2\lambda\right)^6}{N}\sum_{i=0}^{N-1} f({\bf r}_{1,i}, {\bf r}_{2,i}),
+\end{equation}
+where $\bf r_i$ is drawn from the uniform distribution (I.E. each variable $x_1$, $x_2$, $y_1$, ...).
+
+\subsection{Importance sampling}
+As in the case of the Legendre polynomial for the radial part of the integral, we again face a situation where our sample interval, represented by the uniform distribution, does not fit our integrand very well. Therefore, it would be logical to apply "Importance sampling". Importance sampling is the process of drawing from a distribution that follows the dominating interval of the integrand, or in other words "sampling the important values".
+
+We recognize that our integrand contains an exponential term. Probability is conserved under transformation of variables, so by calling
+
+\begin{equation}
+    P(y) = e^{-y}
+\end{equation}
+our probability density function, and mapping
+\begin{equation}
+    y(u) = -ln\left(1-u\right),
+\end{equation}
+we get our new integral variable $y\in [0,\infty)$, and can perform Monte Carlo integration with drawing from the exponential distribution instead. This is done for the radial part which has limits $0,\infty$, while the angular part still is drawn from the uniform distribution.
 
 \section{Methods}
 \label{sec:methods}
@@ -99,7 +243,7 @@ The code used to acquire the results in this report comes from the C++ program $
 \subsection{Algorithm}
 The C++ program [CODE NAME!] solves one integration problem using four different methods: Gauss-Legendre Quadrature, a mix of Gauss-Legendre and Gauss-Laguerre Quadrature which we will call Improved Gaussian Quadrature, Monte-Carlo integration using the uniform distribution, and Monte-Carlo integration using importance sampling.
 \subsubsection{Quadrature}
-For the less elegant Gaussian Quadrature methods, we use functions $gauss_legendre$ and $gauss_laguerre$ found in [SITE WHERE FUNCTIONS COME FROM] to calculate the integration points and weights for both Gaussian-Legendre and Improved Gaussian Quadrature. The brute force Gaussian-Legendre Quadrature is done using the following pseudo code.
+For the less elegant Gaussian Quadrature methods, we use functions \textit{gauss\_legendre} and \textit{gauss\_laguerre} found in [SITE WHERE FUNCTIONS COME FROM] to calculate the integration points and weights for both Gaussian-Legendre and Improved Gaussian Quadrature. The brute force Gaussian-Legendre Quadrature is done using the following pseudo code.
 \begin{lstlisting}[language=c++]
 double brute_force(int N, double a, double b){
     double *x = new double [N];
@@ -247,9 +391,9 @@ paralleization comparison
 \newpage
 \begin{thebibliography}{}
 
-\bibitem{Lecture}[(Hjorth-Jensen, 2017)]{MHJ} Hjorth-Jensen, Morten \, Aug 23 2017, "Computational Physics Lectures:Numerical integration, from Newton-Cotes quadrature to Gaussian quadrature" , \url{http://compphysics.github.io/ComputationalPhysics/doc/pub/integrate/pdf/integrate-print.pdf}
+\bibitem{Lecture1}[(Hjorth-Jensen, 2017)]{MHJ} Hjorth-Jensen, Morten \, Aug 23 2017, "Computational Physics Lectures:Numerical integration, from Newton-Cotes quadrature to Gaussian quadrature" , \url{http://compphysics.github.io/ComputationalPhysics/doc/pub/integrate/pdf/integrate-print.pdf}
 
-\bibitem{Lecture}[(Hjorth-Jensen, 2019)]{MHJ} Hjorth-Jensen, Morten \, Oct 4 2019, "Computational Physics Lectures: Introduction to Monte Carlo methods" , \url{http://compphysics.github.io/ComputationalPhysics/doc/pub/mcint/pdf/mcint-print.pdf}
+\bibitem{Lecture2}[(Hjorth-Jensen, 2019)]{MHJ} Hjorth-Jensen, Morten \, Oct 4 2019, "Computational Physics Lectures: Introduction to Monte Carlo methods" , \url{http://compphysics.github.io/ComputationalPhysics/doc/pub/mcint/pdf/mcint-print.pdf}
 
 \bibitem{Project}[(Hjorth-Jensen, 2019)]{MHJ} Hjorth-Jensen, Morten \, Oct 2019, "Project 3"
 \url{http://compphysics.github.io/ComputationalPhysics/doc/Projects/2019/Project3/pdf/Project3.pdf}
