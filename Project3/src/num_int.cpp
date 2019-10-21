@@ -5,6 +5,11 @@
 #include <random>
 #include <string>
 #include <fstream>
+
+#include <iomanip>
+#include <stdlib.h>
+#include <stdio.h>
+
 // #include <omp.h>
 #define ZERO 1.0E-10
 #define EPS 3.0e-14
@@ -441,8 +446,13 @@ void timing_function(int N, bool quad_solve, int M, bool monte_solve){
 
     string s("brute_force_results.txt");
     quadfile.open(s);
+<<<<<<< Updated upstream:Project3/src/num_int.cpp
     quadfile << setiosflags(ios::showpoint | ios::uppercase);
     for (int i = 0; i < N/2; i++){
+=======
+    //quadfile << setiosflags(ios::showpoint | ios::uppercase);
+    for (int i = 0; i < N/5; i++){
+>>>>>>> Stashed changes:Project3/num_int.cpp
       quadfile << setw(15) << setprecision(8) << points[i];
       quadfile << setw(15) << setprecision(8) << leg_results[i];
       quadfile << setw(15) << setprecision(8) << abs((leg_results[i]-analytic)/analytic);
