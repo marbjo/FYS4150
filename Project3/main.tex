@@ -75,7 +75,7 @@
   Oslo, P.O.\ Box 1029 Blindern, N-0315 Oslo, Norway}
 
 \begin{abstract}
-In this paper, we apply the Gaussian quadrature and Monte Carlo integration methods for solving the six-dimensional integral arising from the expectation value for the correlation energy between two electrons in a helium atom. The results show that \textbf{SHOW RESULTS HERE, SPECIFICALLY: ERROR IN GAUSSIAN SCALES WITH GRID POINTS, IMPROVED GAUSSIAN MUCH FASTER CONVERGENCE, BRUTE FORCE MONTE CARLO FAST BUT INACCURATE, DECREASE IN VARIANCE IN IMPROVED MONTE CARLO}.
+In this paper, we apply the Gaussian quadrature and Monte Carlo integration methods for solving the six-dimensional integral arising from the expectation value for the correlation energy between two electrons in a helium atom. The results show that while the brute force Gaussian quadrature error scales downwards with grid points, the improved Gaussian quadrature reduces the error by almost one whole order of magnitude, and converges much much faster (in terms of grid points). It is however slower in terms of run time. The brute force Monte Carlo is very fast, but highly inaccurate. The improved Monte Carlo gives the best result, as it is both the fastest and the most accurate. In summary, when considering run time and accuracy, one would prefer the improved Monte Carlo method, followed by improved Gaussian, brute force Monte Carlo and finally the brute force Gaussian quadrature.
 
 \end{abstract}
 \keywords{Numerical integration --- Guassian quadrature --- Monte Carlo methods}
@@ -224,7 +224,7 @@ Thus, we can apply Monte Carlo integration by the relation in equation \ref{eq:M
 where $\bf r_i$ is drawn from the uniform distribution (I.E. each variable $x_1$, $x_2$, $y_1$, ...).
 
 \subsection{Importance sampling}
-As in the case of the Legendre polynomial for the radial part of the integral, we again face a situation where our sample interval, represented by the uniform distribution, does not fit our integrand very well. Therefore, it would be logical to apply "Importance sampling". Importance sampling is the process of drawing from a distribution that follows the dominating interval of the integrand, or in other words "sampling the important values".
+As in the case of the Legendre polynomial for the radial part of the integral, we again face a situation where our sample interval, represented by the uniform distribution, does not fit our integrand very well. Therefore, it would be logical to apply "Importance sampling". Importance sampling is the process of drawing from a distribution that follows the shape of the integrand, or in other words "sampling the important values".
 
 We recognize that our integrand contains an exponential term. Probability is conserved under transformation of variables, so by calling
 
@@ -264,8 +264,7 @@ double brute_force(int N, double a, double b){
 \end{lstlisting}
 Here we have integrated over all six spatial Cartesian variables on the interval $[a,b]$ with $N$ integration points. $remainder()$ is the remaining function after dividing out the weight function from the function of interest and the selection of $a$ and $b$ will be discussed in Section \ref{subsec:parameters}. The above method is also used for solving our integral using Improved Gaussian Quadrature. We transform our integral to spherical coordinates and use the  the \textbf{\textit{gauss}}\_\textbf{\textit{laguerre}} function to calculate the integration points and weights for the radial dependency. For the angular dependencies, we use the \textbf{\textit{gauss}}\_\textbf{\textit{legendre}} function to get with weights and integration points for $\theta$ and $\phi$ on the intervals $[0,\pi]$ and $[0,2\pi]$ respectively. We now have a weight and points vector unique to each coordinate type and integrate over the six variables.
 \subsubsection{Monte-Carlo}
-%We used the C++ function $mt19937$ to generate the seed for our distribution sampling.
-We used the Mersenne-Twister random number generator, \textbf{\textit{mt19937}}, to generate the seed for our distribution sampling. We then implemented the following pseudo code for a brute force approach to Monte-Carlo integration.
+We used the Mersenne-Twister random number generator, \textbf{\textit{mt19937}}, to generate the random numbers for our distribution sampling. We then implemented the following pseudo code for a brute force approach to Monte-Carlo integration.
 \begin{lstlisting}[language=c++]
 uniform_real_distribution<double> my_dist(a,b);
 MCint = MCintsqr = 0;
