@@ -226,8 +226,16 @@ void test_legendre(){
 
 // solving methods
 double brute_force(int N, double a, double b){
-  //N = number of integration points
-  //a,b = integration boundaries
+  /*
+  Gaussian Legendre Quadrature for cartestian coordinates
+
+  N = integration Points
+
+  [a,b] is interval in which to integrate over. Mapping to these coordintes from
+  [-1,1] is handled by gauss_legendre
+
+  returns the computed integral value
+  */
 
   double *x = new double [N]; //integration points
   double *w = new double [N]; //weights for each int point
@@ -255,6 +263,13 @@ double brute_force(int N, double a, double b){
 }
 
 double improved_gauss(int N){
+  /*
+  Solving method for Laguerre quadrature over radial variable and legendre
+  quadrature over angular variables
+
+  returns computed intrgral value for N integration points
+  */
+
   // legendre method for theta / phi
   double *theta = new double [N];
   double *wtheta = new double [N];
@@ -299,7 +314,9 @@ double improved_gauss(int N){
 
 tuple<double, double> brute_monte(int N, double a, double b){
   /*
-  monte carlo integration just using uniform distribution
+  monte carlo integration just using uniform distribution over [a,b] and cartesian coordinates
+
+  returns <integral value, variance>
   */
   mt19937 generate(2019);
   uniform_real_distribution<double> my_dist(a,b);
@@ -339,6 +356,8 @@ tuple<double,double> improved_monte(int N){
   /*
   use exp_dist of form e^-(a*x) for exponential piece and
   uniform dist for angular pieces
+
+  returns <integral value, variance>
   */
 
   mt19937 generate(2019);
@@ -380,7 +399,7 @@ tuple<double,double> improved_monte(int N){
 
 void timing_function(int N, bool quad_solve, int M, bool monte_solve){
   /*
-  Timing function will do gaussian quadrature for multiples of five up to and including N.
+  Timing function will do gaussian quadrature for multiples of 2 up to and including N.
   It will do montecarlo simulation for 10^i points in the range i = 1... i=M.
   It then prints out values from solving:
 
@@ -396,34 +415,34 @@ void timing_function(int N, bool quad_solve, int M, bool monte_solve){
 
   if (quad_solve == true){
     ofstream quadfile;
-    double *leg_time = new double [N/5];
-    double *leg_results = new double [N/5];
-    double *lag_time = new double [N/5];
-    double *lag_results = new double [N/5];
-    double *points = new double [N/5];
+    double *leg_time = new double [N/2];
+    double *leg_results = new double [N/2];
+    double *lag_time = new double [N/2];
+    double *lag_results = new double [N/2];
+    double *points = new double [N/2];
 
     // brute force methods
     double a = lambda_limit(2,10E-5);
 
-    for (int i = 5; i <= N; i+=5){
+    for (int i = 2; i <= N; i+=2){
       clock_t start, finish, start1, finish1;
       start = clock();
-      leg_results[i/5-1] = brute_force(i,-a,a);
+      leg_results[i/2-1] = brute_force(i,-a,a);
       finish = clock();
-      leg_time[i/5-1] = ((double) (finish-start))/CLOCKS_PER_SEC;
+      leg_time[i/2-1] = ((double) (finish-start))/CLOCKS_PER_SEC;
 
       start1 = clock();
-      lag_results[i/5-1] = improved_gauss(i);
+      lag_results[i/2-1] = improved_gauss(i);
       finish1 = clock();
-      lag_time[i/5-1] = ((double) (finish1-start1))/CLOCKS_PER_SEC;
+      lag_time[i/2-1] = ((double) (finish1-start1))/CLOCKS_PER_SEC;
 
-      points[i/5-1] = i;
+      points[i/2-1] = i;
     }
 
     string s("brute_force_results.txt");
     quadfile.open(s);
     quadfile << setiosflags(ios::showpoint | ios::uppercase);
-    for (int i = 0; i < N/5; i++){
+    for (int i = 0; i < N/2; i++){
       quadfile << setw(15) << setprecision(8) << points[i];
       quadfile << setw(15) << setprecision(8) << leg_results[i];
       quadfile << setw(15) << setprecision(8) << abs((leg_results[i]-analytic)/analytic);
@@ -547,8 +566,8 @@ int main(int argc, char const *argv[]) {
     cout << "variance= " << get<1>(a) << endl;
     cout <<"true value= " << analytic << endl;
   }
-  // timing_function(35, true, 7, true);
 
+  timing_function(32, true, 7, false);
 
   return 0;
 }
