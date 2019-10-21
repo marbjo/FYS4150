@@ -83,12 +83,16 @@ Briefly what we are doing with what methods, and summary of the main results.
 
 \section{Introduction}
 \label{sec:introduction}
-Brief overview of motivation, what problems we are actually solving, and overview of what is in the following sections.
 
+In many scientific applications, we encounter the case of multi-dimensional integrals. These are almost always impossible to solve analytically, so we need to employ numerical methods. Traditional integration methods, like Newton-Cotes, often require a lot of mesh points in order to achieve a desired accuracy, thereby drastically increasing the demand for computational power. In the case of multi-dimensional integrals, this demand would be even higher, as we would scale as $N^n$ FLOPS, where N is the number of mesh points and n is the dimension of the integral. Therefore, there is a lot to be gained by finding methods in which we can decrease the amount of FLOPS, while retaining the accuracy. In this paper, we will look at two such methods here, namely Gaussian quadrature and Monte Carlo integration.
+
+The problem in question is that of determining the ground state correlation energy between two electrons in a helium atom. This problem presents a six-dimensional integral, with an analytical solution. The fact that an analytical solution exists will prove as an important benchmark for our algorithms, and thereby sets up a perfect environment for testing the efficiency of different algorithms.
+
+The paper consists of 5 main sections following this one. In the theory section, we provide the fundamental theory for setting up the problem, as well as the theory behind the algorithms used to solve the integral. In the methods section, we present details on the implementation of the algorithms, and the choice of parameters, as well as unit testing. In the results section, we provide the main results, focusing on numerical result, error and run time. We discuss the results in the discussion section, and provide closing thoughts in the conclusions section.
 
 \section{Theory}
 \label{sec:method}
-The problem in question is that of determining the ground state correlation energy between two electrons in a helium atom. Our first assumption is that each electron behaves according to the single-particle wave function for an electron in the hydrogen atom, albeit not normalized, given as
+Our first assumption is that each electron behaves according to the single-particle wave function for an electron in the hydrogen atom, albeit not normalized, given as
 
 \[
    \psi_{1s}({\bf r}_i)  =   e^{-\alpha r_i},
@@ -232,7 +236,7 @@ our probability density function, and mapping
 \begin{equation}
     y(u) = -ln\left(1-u\right),
 \end{equation}
-we get our new integral variable $y\in [0,\infty)$, and can perform Monte Carlo integration with drawing from the exponential distribution instead. This is done for the radial part which has limits $0,\infty$, while the angular part still is drawn from the uniform distribution.
+we get our new integral variable $y\in [0,\infty)$, and can perform Monte Carlo integration with drawing from the exponential distribution instead. This is done for the radial part which has limits $[0,\infty)$, while the angular part still is drawn from the uniform distribution.
 
 \section{Methods}
 \label{sec:methods}
