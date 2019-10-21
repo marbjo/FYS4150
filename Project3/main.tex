@@ -75,8 +75,7 @@
   Oslo, P.O.\ Box 1029 Blindern, N-0315 Oslo, Norway}
 
 \begin{abstract}
-
-Briefly what we are doing with what methods, and summary of the main results.
+In this paper, we apply the Gaussian quadrature and Monte Carlo integration methods for solving the six-dimensional integral arising from the expectation value for the correlation energy between two electrons in a helium atom. The results show that \textbf{SHOW RESULTS HERE, SPECIFICALLY: ERROR IN GAUSSIAN SCALES WITH GRID POINTS, IMPROVED GAUSSIAN MUCH FASTER CONVERGENCE, BRUTE FORCE MONTE CARLO FAST BUT INACCURATE, DECREASE IN VARIANCE IN IMPROVED MONTE CARLO}.
 
 \end{abstract}
 \keywords{Numerical integration --- Guassian quadrature --- Monte Carlo methods}
@@ -212,7 +211,7 @@ where $\theta$ denotes the Heaviside step function, we get
 \begin{equation}
     \int_a^b f(x) dx = \left(b-a\right) \int_a^b f(x) P_\text{uniform}(x) dx.
 \end{equation}
-In the case of the correlation energy, we have $(a,b) = (-\infty,\infty)$, a 6-dimensional integral and our original integrand as given in equation \ref{eq:correlationenergy}. Thus we need to again approximate the limits as $(-\lambda,\lambda)$, and we get
+In the case of the correlation energy, we have $(a,b) = (-\infty,\infty)$, a 6-dimensional integral and our original integrand as given in equation \ref{eq:correlationenergy}. Thus we need to approximate the limits as $(-\lambda,\lambda)$, and we get
 
 \begin{align*}
     I &= \left(2\lambda\right)^6 \int_{-\lambda}^{\lambda} d{\bf r}_1d{\bf r}_2  e^{-4 (r_1+r_2)}\frac{1}{|{\bf r}_1-{\bf r}_2|} P_\text{uniform}({\bf r}_1, {\bf r}_2) \\
@@ -242,12 +241,12 @@ we get our new integral variable $y\in [0,\infty)$, and can perform Monte Carlo 
 \label{sec:methods}
 In this section we will describe the methods we utilized to acquire our results.
 \subsection{Code}
-The code used to acquire the results in this report comes from the C++ program $[num_int.c++]$. This file executes various numerical integration methods, runs unit tests, and prints results to text files. There is also a python file [plot.py] that is used to put the data into easy to handle Pandas dataframes.
+The code used to acquire the results in this report comes from the C++ program \textbf{\textit{num}}\_\textbf{\textit{int.c++}}. This file executes various numerical integration methods, runs unit tests, and prints results to text files. There is also a python file \textbf{\textit{plot.py}} that is used to put the data into easy to handle Pandas dataframes.
 
 \subsection{Algorithm}
 The C++ program [CODE NAME!] solves one integration problem using four different methods: Gauss-Legendre Quadrature, a mix of Gauss-Legendre and Gauss-Laguerre Quadrature which we will call Improved Gaussian Quadrature, Monte-Carlo integration using the uniform distribution, and Monte-Carlo integration using importance sampling.
 \subsubsection{Quadrature}
-For the less elegant Gaussian Quadrature methods, we use functions \textit{gauss\_legendre} and \textit{gauss\_laguerre} found in [SITE WHERE FUNCTIONS COME FROM] to calculate the integration points and weights for both Gaussian-Legendre and Improved Gaussian Quadrature. The brute force Gaussian-Legendre Quadrature is done using the following pseudo code.
+For the less elegant Gaussian Quadrature methods, we use functions \textbf{\textit{gauss}}\_\textbf{\textit{legendre}} and \textbf{\textit{gauss}}\_\textbf{\textit{laguerre}} found in [SITE WHERE FUNCTIONS COME FROM] to calculate the integration points and weights for both Gaussian-Legendre and Improved Gaussian Quadrature. The brute force Gaussian-Legendre Quadrature is done using the following pseudo code.
 \begin{lstlisting}[language=c++]
 double brute_force(int N, double a, double b){
     double *x = new double [N];
@@ -263,9 +262,10 @@ double brute_force(int N, double a, double b){
                             * remainder(x[i],x[j],x[k],x[l],x[m],x[n]);
     }}}}}}}
 \end{lstlisting}
-Here we have integrated over all six spatial Cartesian variables on the interval $[a,b]$ with $N$ integration points. $remainder()$ is the remaining function after dividing out the weight function from the function of interest and the selection of $a$ and $b$ will be discussed in Section \ref{subsec:parameters}. The above method is also used for solving our integral using Improved Gaussian Quadrature. We transform our integral to spherical coordinates and use the  the $gauss_laguerre$ function to calculate the integration points and weights for the radial dependency. For the angular dependencies, we use the $gauss_legendre$ function to get with weights and integration points for $\theta$ and $\phi$ on the intervals $[0,\pi]$ and $[0,2\pi]$ respectively. We now have a weight and points vector unique to each coordinate type and integrate over the six variables.
+Here we have integrated over all six spatial Cartesian variables on the interval $[a,b]$ with $N$ integration points. $remainder()$ is the remaining function after dividing out the weight function from the function of interest and the selection of $a$ and $b$ will be discussed in Section \ref{subsec:parameters}. The above method is also used for solving our integral using Improved Gaussian Quadrature. We transform our integral to spherical coordinates and use the  the \textbf{\textit{gauss}}\_\textbf{\textit{laguerre}} function to calculate the integration points and weights for the radial dependency. For the angular dependencies, we use the \textbf{\textit{gauss}}\_\textbf{\textit{legendre}} function to get with weights and integration points for $\theta$ and $\phi$ on the intervals $[0,\pi]$ and $[0,2\pi]$ respectively. We now have a weight and points vector unique to each coordinate type and integrate over the six variables.
 \subsubsection{Monte-Carlo}
-We used the C++ function $mt19937$ to generate the seed for our distribution sampling. We then implemented the following pseudo code for a brute force approach to Monte-Carlo integration.
+%We used the C++ function $mt19937$ to generate the seed for our distribution sampling.
+We used the Mersenne-Twister random number generator, \textbf{\textit{mt19937}}, to generate the seed for our distribution sampling. We then implemented the following pseudo code for a brute force approach to Monte-Carlo integration.
 \begin{lstlisting}[language=c++]
 uniform_real_distribution<double> my_dist(a,b);
 MCint = MCintsqr = 0;
@@ -289,7 +289,7 @@ Here, the uniform distribution is used to generate all random points when solvin
 \label{subsec:parameters}
 Since we are using numerical techniques to solve the integral described in [EQUATION-CARTESIAN], we must find a reasonable approximation for infinity. In our code, we have implemented a script to loop over $\lambda$ values until $e^{-2\alpha\lambda} < 1\times10^{-5}$ for $\alpha = 2$. The function described in [EQUATION] is radially symmetric so we will use $-\lambda$ and $\lambda$ for the upper and lower bounds when evaluating in Cartesian coordinates. We also need to handle potential singular points arising from the denominator in [EQUATION-CARTESIAN] and [EQUATION-RADIAL]. In our solution, we chose to ignore points where the denominator is $\leq 10^{-10}$.
 \subsection{Unit Tests}
-Writing unit tests for this project proved to be slightly challenging. Since we know  the analytical answer to our integral from the start, we are testing our methods each time we run the code and compare it to the analytical answer. In a sense, this makes solving this specific integral a unit test of our methods. The values of the weights and integration points are easily found in tabulated charts for both Laguerre and Legendre quadrature. In our code, we implement two tests to compare the weights and points generated by the $gauss_legendre$ and $gauss_laguerre$ functions compared to the tabulated values.
+Writing unit tests for this project proved to be slightly challenging. Since we know  the analytical answer to our integral from the start, we are testing our methods each time we run the code and compare it to the analytical answer. In a sense, this makes solving this specific integral a unit test of our methods. The values of the weights and integration points are easily found in tabulated charts for both Laguerre and Legendre quadrature. In our code, we implement two tests to compare the weights and points generated by the \textbf{\textit{gauss}}\_\textbf{\textit{legendre}} and \textbf{\textit{gauss}}\_\textbf{\textit{laguerre}} functions compared to the tabulated values.
 \subsection{Parallelization}
 FUUUUUUUUUUUUUUCK
 \section{Results}
