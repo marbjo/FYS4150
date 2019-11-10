@@ -33,11 +33,12 @@ int main(int argc, char *argv[]){
         cout << "Error: missing command line argument. Must provide 1 if you want printed output, or anything else if not." << endl;
         return 1;
     }
+
     MPI_Init (&argc, &argv);
     int numprocs;
-    MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
+    MPI_Comm_size (MPI_COMM_WORLD, &numprocs); //Letting everybody know the size of communicator
     int my_rank;
-    MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_rank (MPI_COMM_WORLD, &my_rank); //Assigning ranks
 
     int print = atoi(argv[1]);
     //All natural units
@@ -61,9 +62,8 @@ int main(int argc, char *argv[]){
     }
 
     //Setting temperatures to loop over.
-    int N_temp = 32; //Has to be dividable by number of cores, or else fuckery.
+    int N_temp = 32; //Should be dividable by number of processes, or else fuckery might occur.
     int N_temp_local = (N_temp) / numprocs; //Number of points for each core.
-
 
     double T_start = 2.00;
     double T_end = 2.30;
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
 
     arma::vec T_vec = arma::linspace(T_start_local,T_end_local,N_temp_local);
 
-    int MC_max = 1E4; //1E5;
+    int MC_max = 1E4;
 
     //Creating matrices for plotting against temperature
     arma::vec E_tot(N_temp_local,arma::fill::zeros); //E(T)
@@ -128,7 +128,6 @@ int main(int argc, char *argv[]){
         //Intermediate variables to plot |E| and |M| as a function of MC steps
         double E_of_MC_counter = 0;
         double M_of_MC_counter = 0;
-
 
         arma::vec accept_arr(MC_max);
 
@@ -231,7 +230,6 @@ int main(int argc, char *argv[]){
             if(L==2 && (T-1) < 1E-10){
                 //Analytically derived values for 2x2 case, only for benchmarking.
                 //Only calculates if L=2 and for T=1.
-
                 double arg = 8*beta*J;
                 double analytic_E = -8*J*sinh(arg)/(cosh(arg)+3);
                 double analytic_M = (2*J*exp(arg) + 4 )/ (cosh(arg) + 3);
@@ -263,7 +261,7 @@ int main(int argc, char *argv[]){
     MPI_Gather(chi_tot.memptr(), N_temp_local, MPI_DOUBLE, chi_gather.memptr(), N_temp_local, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     //Writing <E(T)> , <M(T)>, <chi(T)> and <C_v(T)> to file. File is named with appropriate spin number
-    if(my_rank==0){
+    if(my_rank==0){ //Only root process writes to file
         ofstream expecvalues;
         char name[80];
         sprintf(name,"L%d_expec_values.txt", L);

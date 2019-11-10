@@ -8,7 +8,6 @@ import pandas as pd
 import seaborn as sns
 from scipy import stats
 
-
 #Loading text file with temperature in front, skipping header.
 #mat = np.loadtxt("1_MC_results.txt",skiprows=1)
 mat = np.loadtxt("2.4_MC_results.txt",skiprows=1)
