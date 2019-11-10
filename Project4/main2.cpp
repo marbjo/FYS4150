@@ -1,5 +1,6 @@
 //Program which does stuff
-//WITHOUT PARALLELIZATION
+//WITH PARALLELIZATION
+
 #include <cmath>
 #include <iostream>
 #include <fstream>
@@ -11,6 +12,7 @@
 #include <armadillo>
 #include <random>
 
+#include <mpi.h>
 
 using namespace std;
 
@@ -26,14 +28,20 @@ inline double delta_E_func(arma::mat A, int i, int j, int L){
     return value;
 }
 
-int main(int argc, char const *argv[]){
+int main(int argc, char *argv[]){
     if (argc < 2) {
         cout << "Error: missing command line argument. Must provide 1 if you want printed output, or anything else if not." << endl;
         return 1;
     }
+    MPI_Init (&argc, &argv);
+    int numprocs;
+    MPI_Comm_size (MPI_COMM_WORLD, &numprocs);
+    int my_rank;
+    MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
+
     int print = atoi(argv[1]);
     //All natural units
-    int L = 20; //Dimensionality
+    int L = 100; //Dimensionality
     double J = 1.0; //Interaction strength
     double k_b = 1.0; //1.38*pow(10,-23); //Boltzmann constant
 
@@ -53,22 +61,30 @@ int main(int argc, char const *argv[]){
     }
 
     //Setting temperatures to loop over.
-    //N_
+    int N_temp = 32; //Has to be dividable by number of cores, or else fuckery.
+    int N_temp_local = (N_temp) / numprocs; //Number of points for each core.
+
+
     double T_start = 2.00;
-    double T_end = 2.31; //Has to be 2.31 to include 2.30, because of the logic in the for loop
-    double delta_T = 0.01;
-    int N_temp = round((T_end-T_start)/delta_T); //Number of different temperatures
-    arma::vec T_vec = arma::linspace(T_start,T_end,N_temp+1);
+    double T_end = 2.30;
+
+    double delta_T = (T_end-T_start)/(N_temp);
+
+    double T_start_local = T_start + my_rank*delta_T*N_temp_local;
+    double T_end_local = T_start + (my_rank+1)*delta_T*N_temp_local - delta_T;
+
+    arma::vec T_vec = arma::linspace(T_start_local,T_end_local,N_temp_local);
+
     int MC_max = 1E4; //1E5;
 
     //Creating matrices for plotting against temperature
-    arma::vec E_tot(N_temp,arma::fill::zeros); //E(T)
-    arma::vec M_tot(N_temp,arma::fill::zeros); //M(T)
-    arma::vec M_abs_tot(N_temp,arma::fill::zeros); //|M(T)|
-    arma::vec E_tot_2(N_temp,arma::fill::zeros); // [E(T)]^2
-    arma::vec M_tot_2(N_temp,arma::fill::zeros); // [M(T)]^2
-    arma::vec C_v_tot(N_temp,arma::fill::zeros); // C_v(T)
-    arma::vec chi_tot(N_temp,arma::fill::zeros); // chi(T)
+    arma::vec E_tot(N_temp_local,arma::fill::zeros); //E(T)
+    arma::vec M_tot(N_temp_local,arma::fill::zeros); //M(T)
+    arma::vec M_abs_tot(N_temp_local,arma::fill::zeros); //|M(T)|
+    arma::vec E_tot_2(N_temp_local,arma::fill::zeros); // [E(T)]^2
+    arma::vec M_tot_2(N_temp_local,arma::fill::zeros); // [M(T)]^2
+    arma::vec C_v_tot(N_temp_local,arma::fill::zeros); // C_v(T)
+    arma::vec chi_tot(N_temp_local,arma::fill::zeros); // chi(T)
 
     //Creating random distributions
     random_device rd; //Seed
@@ -76,13 +92,10 @@ int main(int argc, char const *argv[]){
     uniform_real_distribution<double> my_dist1(0,1);
     uniform_real_distribution<double> my_dist2(0,L);
 
-
-    for(int i0=0; i0<N_temp; i0++){
+    for(int i0=0; i0<N_temp_local; i0++){
         //Looping over temperatures
 
         double T = T_vec(i0);
-        cout << "T: " << T << endl;
-
         double beta = 1/(k_b*T);
 
         arma::vec acceptance_tol(5); //Precalced array of ratios for accepting a MC step.
@@ -165,17 +178,16 @@ int main(int argc, char const *argv[]){
         //Computing expectation values of E,M,E^2,M^2 and the values C_v and chi
         double expec_E = arma::sum(E_arr) / MC_max;  // <E>
         double expec_M = arma::sum(M_arr) / MC_max; // <M>
+        double M_abs = sqrt(expec_M*expec_M);
         double expec_E_2 = arma::sum(E_arr_2) / MC_max; // <E^2>
         double expec_M_2 = arma::sum(M_arr_2) / MC_max; // <M^2>
         double C_v = (expec_E_2 - expec_E*expec_E) / (k_b*T*T); //Heat capacity
-        double chi = (expec_M_2 - expec_M*expec_M) / (k_b*T); //Susceptibility
-
-        //cout << "T = " << T << endl;
+        double chi = (expec_M_2 - M_abs*M_abs) / (k_b*T); //Susceptibility
 
         //Saving values for this value of T for later
         E_tot(i0) = expec_E;
         M_tot(i0) = expec_M;
-        M_abs_tot(i0) = sqrt(expec_M_2);
+        M_abs_tot(i0) = M_abs;
         E_tot_2(i0) = expec_E_2;
         M_tot_2(i0) = expec_M_2;
         C_v_tot(i0) = C_v;
@@ -234,30 +246,51 @@ int main(int argc, char const *argv[]){
 
     }//End temperature loop
 
+    //Gathering all data in root process (0)
+    arma::vec T_gather(N_temp, arma::fill::zeros);
+    MPI_Gather(T_vec.memptr(), N_temp_local, MPI_DOUBLE, T_gather.memptr(), N_temp_local, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    arma::vec E_gather(N_temp, arma::fill::zeros);
+    MPI_Gather(E_tot.memptr(), N_temp_local, MPI_DOUBLE, E_gather.memptr(), N_temp_local, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    arma::vec M_gather(N_temp, arma::fill::zeros);
+    MPI_Gather(M_abs_tot.memptr(), N_temp_local, MPI_DOUBLE, M_gather.memptr(), N_temp_local, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    arma::vec Cv_gather(N_temp, arma::fill::zeros);
+    MPI_Gather(C_v_tot.memptr(), N_temp_local, MPI_DOUBLE, Cv_gather.memptr(), N_temp_local, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    arma::vec chi_gather(N_temp, arma::fill::zeros);
+    MPI_Gather(chi_tot.memptr(), N_temp_local, MPI_DOUBLE, chi_gather.memptr(), N_temp_local, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
     //Writing <E(T)> , <M(T)>, <chi(T)> and <C_v(T)> to file. File is named with appropriate spin number
-    ofstream expecvalues;
-    char name[80];
-    sprintf(name,"L%d_expec_values.txt", L);
+    if(my_rank==0){
+        ofstream expecvalues;
+        char name[80];
+        sprintf(name,"L%d_expec_values.txt", L);
 
-    expecvalues.open(name);
-    expecvalues << setiosflags(ios::showpoint | ios::uppercase);
+        expecvalues.open(name);
+        expecvalues << setiosflags(ios::showpoint | ios::uppercase);
 
-    expecvalues << setw(15) << setprecision(8) << "Temperature";
-    expecvalues << setw(15) << setprecision(8) << "<E(T)>";
-    expecvalues << setw(15) << setprecision(8) << "<M(T)>";
-    expecvalues << setw(15) << setprecision(8) << "<C_v(T)>";
-    expecvalues << setw(15) << setprecision(8) << "<Chi(T)>";
-    expecvalues << endl;
-
-    for(int i=0; i<N_temp; i++){
-        expecvalues << setw(15) << setprecision(8) << T_vec[i];
-        expecvalues << setw(15) << setprecision(8) << E_tot[i];
-        expecvalues << setw(15) << setprecision(8) << M_tot[i];
-        expecvalues << setw(15) << setprecision(8) << C_v_tot[i];
-        expecvalues << setw(15) << setprecision(8) << chi_tot[i];
+        expecvalues << setw(15) << setprecision(8) << "Temperature";
+        expecvalues << setw(15) << setprecision(8) << "<E(T)>";
+        expecvalues << setw(15) << setprecision(8) << "<M(T)>";
+        expecvalues << setw(15) << setprecision(8) << "<C_v(T)>";
+        expecvalues << setw(15) << setprecision(8) << "<Chi(T)>";
         expecvalues << endl;
-    }
-    expecvalues.close();
 
+        for(int i=0; i<N_temp; i++){
+            expecvalues << setw(15) << setprecision(8) << T_gather[i];
+            expecvalues << setw(15) << setprecision(8) << E_gather[i];
+            expecvalues << setw(15) << setprecision(8) << M_gather[i];
+            expecvalues << setw(15) << setprecision(8) << Cv_gather[i];
+            expecvalues << setw(15) << setprecision(8) << chi_gather[i];
+            expecvalues << endl;
+        }
+        expecvalues.close();
+    }
+    MPI_Finalize();
+
+    //THINGS TO DO: LOOK AT LOGIC BEHIND N_local stuff, not correct division between cores.
+    //ALSO DO THE SAME STUFF FOR OTHER VALUES AS YOU DID FOR Temperature
     return 0; //End of main program
 }
