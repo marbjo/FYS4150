@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
 import sys
-
-
 import pandas as pd
 import seaborn as sns
 from scipy import stats
@@ -17,7 +15,6 @@ E_of_MC = mat[:,2]
 M = mat[:,3]
 accept_flips = mat[:,4]
 
-print("We got this far")
 N = len(mat[:,0])
 plot_vec = np.linspace(0,N,N)
 
@@ -53,15 +50,9 @@ print("Variance: %g" %var)
 print("Mean: %g" %mean)
 std = np.sqrt(var)
 
-#Creating distribution with computed values, and plotting for comparison
-#x = np.random.normal(loc=mean, scale=std, size=eq_index)
-#sns.distplot(x);
-#plt.show()
 
 plt.hist(E_norm_by_spins[eq_index:], bins="auto", histtype='bar', ec='black', color = 'green', label='Energy', density = True)
-#plt.plot(x)
 plt.xlabel('E', fontsize=20)
 plt.ylabel('Occurences (P(E))', fontsize=20)
 plt.title('', fontsize=20)
-#plt.legend()
 plt.show()

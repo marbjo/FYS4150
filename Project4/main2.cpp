@@ -1,4 +1,4 @@
-//Program which does stuff
+//Main progeam
 //WITH PARALLELIZATION
 
 #include <cmath>
@@ -42,19 +42,19 @@ int main(int argc, char *argv[]){
 
     int print = atoi(argv[1]);
     //All natural units
-    int L = 100; //Dimensionality
+    int L = 40; //Dimensionality
     double J = 1.0; //Interaction strength
-    double k_b = 1.0; //1.38*pow(10,-23); //Boltzmann constant
+    double k_b = 1.0; //Boltzmann constant, natural units
 
-    //arma::mat A(L,L, arma::fill::ones); //Initial state doesn't mattter, so just setting all ones
+    //arma::mat A(L,L, arma::fill::ones); //Initial state doesn't mattter, use this if you want ordered initial state.
 
     //Defining random initial state (1 or -1)
     arma::mat A(L,L);
     for(int i=0; i<L; i++){
         for(int k=0; k<L; k++){
-            int number = rand()%2;
+            int number = rand()%2; //Either 1 or 0
 
-            if(number==0){
+            if(number==0){ //Setting all zeros to -1's
                 number = -1;
             }
             A(i,k) = number;
@@ -62,11 +62,11 @@ int main(int argc, char *argv[]){
     }
 
     //Setting temperatures to loop over.
-    int N_temp = 32; //Should be dividable by number of processes, or else fuckery might occur.
+    int N_temp = 32; //Should be dividable by number of processes, or else fuckery might occur. Should also be more enough to satisfy delta_T < 0.05.
     int N_temp_local = (N_temp) / numprocs; //Number of points for each core.
 
-    double T_start = 2.00;
-    double T_end = 2.30;
+    double T_start = 2.1;
+    double T_end = 2.40;
 
     double delta_T = (T_end-T_start)/(N_temp);
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
 
     arma::vec T_vec = arma::linspace(T_start_local,T_end_local,N_temp_local);
 
-    int MC_max = 1E4;
+    int MC_max = 1E5;
 
     //Creating matrices for plotting against temperature
     arma::vec E_tot(N_temp_local,arma::fill::zeros); //E(T)
@@ -92,10 +92,18 @@ int main(int argc, char *argv[]){
     uniform_real_distribution<double> my_dist1(0,1);
     uniform_real_distribution<double> my_dist2(0,L);
 
+
+    MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
+    double start = MPI_Wtime();
+
     for(int i0=0; i0<N_temp_local; i0++){
         //Looping over temperatures
 
         double T = T_vec(i0);
+
+        if(my_rank == 0){
+            cout << "This is run " << i0+1 << " out of " << N_temp_local << endl;
+        }
         double beta = 1/(k_b*T);
 
         arma::vec acceptance_tol(5); //Precalced array of ratios for accepting a MC step.
@@ -174,23 +182,53 @@ int main(int argc, char *argv[]){
 
         }//End Monte Carlo loop
 
-        //Computing expectation values of E,M,E^2,M^2 and the values C_v and chi
-        double expec_E = arma::sum(E_arr) / MC_max;  // <E>
-        double expec_M = arma::sum(M_arr) / MC_max; // <M>
-        double M_abs = sqrt(expec_M*expec_M);
-        double expec_E_2 = arma::sum(E_arr_2) / MC_max; // <E^2>
-        double expec_M_2 = arma::sum(M_arr_2) / MC_max; // <M^2>
-        double C_v = (expec_E_2 - expec_E*expec_E) / (k_b*T*T); //Heat capacity
-        double chi = (expec_M_2 - M_abs*M_abs) / (k_b*T); //Susceptibility
+        //Computing expectation values of E,M,E^2,M^2 and the values C_v and chi (not considering reaching most likely state)
+        // double expec_E = arma::sum(E_arr) / MC_max;  // <E>
+        // double expec_M = arma::sum(M_arr) / MC_max; // <M>
+        // double M_abs = sqrt(expec_M*expec_M);
+        // double expec_E_2 = arma::sum(E_arr_2) / MC_max; // <E^2>
+        // double expec_M_2 = arma::sum(M_arr_2) / MC_max; // <M^2>
+        // double C_v = (expec_E_2 - expec_E*expec_E) / (k_b*T*T); //Heat capacity
+        // double chi = (expec_M_2 - M_abs*M_abs) / (k_b*T); //Susceptibility
 
-        //Saving values for this value of T for later
-        E_tot(i0) = expec_E;
-        M_tot(i0) = expec_M;
-        M_abs_tot(i0) = M_abs;
-        E_tot_2(i0) = expec_E_2;
-        M_tot_2(i0) = expec_M_2;
-        C_v_tot(i0) = C_v;
-        chi_tot(i0) = chi;
+        int eq_index = 10000; //Set index where equilibrium is reached, seen from graph
+
+        double expec_E_eq = 0;
+        double expec_M_eq = 0;
+        double expec_E2_eq = 0;
+        double expec_M2_eq = 0;
+        double expec_M_abs_eq = 0;
+
+        //Summing over only the last part after equilibrium
+        for(int i=eq_index; i<MC_max; i++){
+            expec_E_eq += E_arr[i];
+            expec_M_eq += M_arr[i];
+            expec_M_abs_eq += fabs(M_arr[i]);
+            expec_E2_eq += E_arr_2[i];
+            expec_M2_eq += M_arr_2[i];
+        }
+
+        //Normalizing according to number of MC steps (after equilibrium cutoff)
+        expec_E_eq = expec_E_eq / (MC_max - eq_index);
+        expec_M_eq = expec_M_eq / (MC_max - eq_index);
+        expec_M_abs_eq = expec_M_abs_eq / (MC_max - eq_index);
+        expec_E2_eq = expec_E2_eq / ((MC_max - eq_index));
+        expec_M2_eq = expec_M2_eq / ((MC_max - eq_index));
+
+        double C_v_eq = (expec_E2_eq - expec_E_eq*expec_E_eq) / (k_b*T*T); //Heat capacity
+        double chi_eq = (expec_M2_eq - expec_M_abs_eq*expec_M_abs_eq) / (k_b*T); //Susceptibility
+
+
+        //Saving thermo quantities for this value of T for later
+        E_tot(i0) = expec_E_eq;
+        M_tot(i0) = expec_M_eq;
+        M_abs_tot(i0) = expec_M_abs_eq;
+
+        E_tot_2(i0) = expec_E2_eq;
+        M_tot_2(i0) = expec_M2_eq;
+
+        C_v_tot(i0) = C_v_eq;
+        chi_tot(i0) = chi_eq;
 
         //Writing |E| and |M| to file for plotting as a function of MC steps.
         // ofstream montefile;
@@ -219,13 +257,13 @@ int main(int argc, char *argv[]){
         //This code block is only for printing output
         if (print==1){
             //Send in 1 as command line argument if you want this output
-            cout << "<E> : " << expec_E << endl;
-            cout << "<M> : " << expec_M << endl;
-            cout << "<|M|> : " << sqrt(expec_M_2) << endl;
-            cout << "<E^2> : " << expec_E_2 << endl;
-            cout << "<M^2> : " << expec_M_2 << endl;
-            cout << "C_v : " << C_v << endl;
-            cout << "chi : " << chi << endl;
+            cout << "<E> : " << expec_E_eq << endl;
+            cout << "<M> : " << expec_M_eq << endl;
+            cout << "<|M|> : " << expec_M_abs_eq << endl;
+            cout << "<E^2> : " << expec_E2_eq << endl;
+            cout << "<M^2> : " << expec_M2_eq << endl;
+            cout << "C_v : " << C_v_eq << endl;
+            cout << "chi : " << chi_eq << endl;
 
             if(L==2 && (T-1) < 1E-10){
                 //Analytically derived values for 2x2 case, only for benchmarking.
@@ -243,6 +281,9 @@ int main(int argc, char *argv[]){
         }//End if-print
 
     }//End temperature loop
+
+    MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
+    double end = MPI_Wtime();
 
     //Gathering all data in root process (0)
     arma::vec T_gather(N_temp, arma::fill::zeros);
@@ -288,7 +329,9 @@ int main(int argc, char *argv[]){
     }
     MPI_Finalize();
 
-    //THINGS TO DO: LOOK AT LOGIC BEHIND N_local stuff, not correct division between cores.
-    //ALSO DO THE SAME STUFF FOR OTHER VALUES AS YOU DID FOR Temperature
+    if (my_rank == 0) { /* use time on master node */
+        printf("Runtime = %f\n", end-start);
+    }
+
     return 0; //End of main program
 }

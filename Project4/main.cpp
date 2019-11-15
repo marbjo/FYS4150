@@ -1,4 +1,4 @@
-//Program which does stuff
+//Main program
 //WITHOUT PARALLELIZATION
 #include <cmath>
 #include <iostream>
@@ -10,7 +10,6 @@
 #include <ctime>
 #include <armadillo>
 #include <random>
-
 
 using namespace std;
 
@@ -33,7 +32,7 @@ int main(int argc, char const *argv[]){
     }
     int print = atoi(argv[1]);
     //All natural units
-    int L = 20; //Dimensionality
+    int L = 2; //Dimensionality
     double J = 1.0; //Interaction strength
     double k_b = 1.0; //1.38*pow(10,-23); //Boltzmann constant
 
@@ -53,13 +52,12 @@ int main(int argc, char const *argv[]){
     }
 
     //Setting temperatures to loop over.
-    //N_
-    double T_start = 2.00;
-    double T_end = 2.31; //Has to be 2.31 to include 2.30, because of the logic in the for loop
+    double T_start = 1.00; //2.00;
+    double T_end = 1.01; //2.31; //Has to be 2.31 to include 2.30, because of the logic in the for loop
     double delta_T = 0.01;
     int N_temp = round((T_end-T_start)/delta_T); //Number of different temperatures
     arma::vec T_vec = arma::linspace(T_start,T_end,N_temp+1);
-    int MC_max = 1E4; //1E5;
+    int MC_max = 1E5; //1E5;
 
     //Creating matrices for plotting against temperature
     arma::vec E_tot(N_temp,arma::fill::zeros); //E(T)
