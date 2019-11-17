@@ -38,26 +38,47 @@ int main(int argc, char const *argv[]){
 
     //arma::mat A(L,L, arma::fill::ones); //Initial state doesn't mattter, so just setting all ones
 
-    //Defining random initial state (1 or -1)
+    //Defining random or ordered initial state
+    bool random_state = true;
     arma::mat A(L,L);
-    for(int i=0; i<L; i++){
+    if (random_state == true){
+      for(int i=0; i<L; i++){
         for(int k=0; k<L; k++){
-            int number = rand()%2;
-
-            if(number==0){
-                number = -1;
-            }
-            A(i,k) = number;
+          int number = rand()%2;
+          if(number==0){
+            number = -1;
+          }
+          A(i,k) = number;
+          }
         }
-    }
+      }
+      else if (random_state == false){
+        for(int i=0; i<L; i++){
+          for(int k=0; k<L; k++){
+            A(i,k) = 1;
+          }
+        }
+      }
+
+
 
     //Setting temperatures to loop over.
+<<<<<<< Updated upstream
     double T_start = 1.00; //2.00;
     double T_end = 1.01; //2.31; //Has to be 2.31 to include 2.30, because of the logic in the for loop
     double delta_T = 0.01;
     int N_temp = round((T_end-T_start)/delta_T); //Number of different temperatures
     arma::vec T_vec = arma::linspace(T_start,T_end,N_temp+1);
     int MC_max = 1E5; //1E5;
+=======
+    //N_
+    double T_start = 1.00;
+    double T_end = 1.01; //Has to be 2.31 to include 2.30, because of the logic in the for loop
+    double delta_T = 0.01;
+    int N_temp = round((T_end-T_start)/delta_T); //Number of different temperatures
+    arma::vec T_vec = arma::linspace(T_start,T_end,N_temp+1);
+    int MC_max = 1E6; //1E5;
+>>>>>>> Stashed changes
 
     //Creating matrices for plotting against temperature
     arma::vec E_tot(N_temp,arma::fill::zeros); //E(T)
@@ -98,9 +119,14 @@ int main(int argc, char const *argv[]){
         arma::vec E_arr_2(MC_max);
         arma::vec M_arr_2(MC_max);
 
-        //Vectors for plotting |E| and |M| as a function of MC steps
+        //Vectors for plotting |E| |M| C_V and Chi as a function of MC steps
         arma::vec E_of_MC(MC_max);
+        arma::vec M_of_MC_abs(MC_max);
         arma::vec M_of_MC(MC_max);
+        arma::vec E_of_MC_2(MC_max);
+        arma::vec M_of_MC_2(MC_max);
+        arma::vec C_V_of_MC(MC_max);
+        arma::vec Chi_of_MC(MC_max);
 
         //Calculating energy and magnetic momentum for intial state
         for(int i=0; i<L; i++){
@@ -113,6 +139,9 @@ int main(int argc, char const *argv[]){
         //Intermediate variables to plot |E| and |M| as a function of MC steps
         double E_of_MC_counter = 0;
         double M_of_MC_counter = 0;
+        double E_of_MC_counter_2 = 0;
+        double M_of_MC_counter_2 = 0;
+
 
 
         arma::vec accept_arr(MC_max);
@@ -147,14 +176,20 @@ int main(int argc, char const *argv[]){
             E_arr_2(mc) = E_arr(mc)*E_arr(mc);
             M_arr_2(mc) = M_arr(mc)*M_arr(mc);
 
-            //Calculating |E| and |M| as a function of MC steps
+            //Calculating |E| |M| M^2 and E^2 as a function of MC steps
             E_of_MC_counter += E_arr[mc];
-            M_of_MC_counter += E_arr[mc];
+            M_of_MC_counter += M_arr[mc];
+            E_of_MC_counter_2 += E_arr_2[mc];
+            M_of_MC_counter_2 += M_arr_2[mc];
 
             //Saving to array for plotting
             E_of_MC[mc] = E_of_MC_counter / (mc+1);
-            M_of_MC[mc] = fabs(M_of_MC_counter / (mc+1));
-
+            E_of_MC_2[mc] = E_of_MC_counter_2 / (mc+1);
+            M_of_MC_2[mc] = M_of_MC_counter_2 / (mc+1);
+            M_of_MC_abs[mc] = sqrt(M_of_MC_2[mc]);
+            M_of_MC[mc] = M_of_MC_counter / (mc+1);
+            C_V_of_MC[mc] = (E_of_MC_2[mc] - E_of_MC[mc]*E_of_MC[mc]) / (k_b*T*T);
+            Chi_of_MC[mc] = (M_of_MC_2[mc] - M_of_MC[mc]*M_of_MC[mc]) / (k_b*T);
             //Acceptance as a function of MC steps
             accept_arr(mc) = accept_counter;
 
@@ -180,28 +215,66 @@ int main(int argc, char const *argv[]){
         chi_tot(i0) = chi;
 
         //Writing |E| and |M| to file for plotting as a function of MC steps.
-        // ofstream montefile;
-        // char s[80];
-        // sprintf(s,"%.3f_MC_results.txt", T);
-        // montefile.open(s);
-        // montefile << setiosflags(ios::showpoint | ios::uppercase);
-        //
-        // montefile << setw(15) << setprecision(1) << "Iteration";
-        // montefile << setw(15) << setprecision(8) << "<E>";
-        // montefile << setw(15) << setprecision(8) << "E(MC) (normalized)";
-        // montefile << setw(15) << setprecision(8) << "<|M|>";
-        // montefile << setw(15) << setprecision(8) << "Accepted flips";
-        // montefile << endl;
-        //
-        // for (int i = 0; i < MC_max; i++){
-        //   montefile << setw(15) << setprecision(1) << i;
-        //   montefile << setw(15) << setprecision(8) << E_arr[i];
-        //   montefile << setw(15) << setprecision(8) << E_of_MC[i];
-        //   montefile << setw(15) << setprecision(8) << M_of_MC[i];
-        //   montefile << setw(15) << setprecision(8) << accept_arr[i];
-        //   montefile << endl;
-        // }
-        // montefile.close();
+        bool write_partc = false;
+        if(write_partc == true){
+          ofstream montefile;
+          char s[80];
+          sprintf(s,"%.3f_MC_results_random_L20.txt", T);
+          montefile.open(s);
+          montefile << setiosflags(ios::showpoint | ios::uppercase);
+
+          montefile << setw(15) << setprecision(1) << "Iteration";
+          montefile << setw(15) << setprecision(8) << "<E>";
+          montefile << setw(15) << setprecision(8) << "E(MC) (normalized)";
+          montefile << setw(15) << setprecision(8) << "<|M|>";
+          montefile << setw(15) << setprecision(8) << "Accepted flips";
+          montefile << endl;
+
+          for (int i = 0; i < MC_max; i++){
+            montefile << setw(15) << setprecision(1) << i;
+            montefile << setw(15) << setprecision(8) << E_arr[i];
+            montefile << setw(15) << setprecision(8) << E_of_MC[i];
+            montefile << setw(15) << setprecision(8) << M_of_MC_abs[i];
+            montefile << setw(15) << setprecision(8) << accept_arr[i];
+            montefile << endl;
+          }
+          montefile.close();
+        }
+
+
+        //write file for part b
+        bool write_partb = true;
+        if(write_partb == true){
+
+          //calc analytical values
+          double arg = 8*beta*J;
+          double analytic_E = -8*J*sinh(arg)/(cosh(arg)+3);
+          double analytic_M = (2*J*exp(arg) + 4 )/ (cosh(arg) + 3);
+          double analytic_Cv = (64*J*J*(3*cosh(arg)+1) / ((cosh(arg) + 3)*(cosh(arg) + 3) )) * 1/(k_b*T*T);
+          double analytic_chi = (8*(exp(arg)+1)/(cosh(arg) + 3) )/ (k_b*T);
+
+          ofstream partb;
+          string s("analytic_comparison_part_b.txt");
+          partb.open(s);
+          partb << setiosflags(ios::showpoint | ios::uppercase);
+          partb << setw(15) << setprecision(8) << "<E(T)>";
+          partb << setw(15) << setprecision(8) << "<|M(T)|>";
+          partb << setw(15) << setprecision(8) << "<C_v(T)>";
+          partb << setw(15) << setprecision(8) << "<Chi(T)>";
+          partb << endl;
+          for (int i = 0; i <  MC_max; i++){
+            partb << setw(15) << setprecision(8) << E_of_MC[i];
+            partb << setw(15) << setprecision(8) << M_of_MC_abs[i];
+            partb << setw(15) << setprecision(8) << C_V_of_MC[i];
+            partb << setw(15) << setprecision(8) << Chi_of_MC[i];
+            partb << endl;
+          }
+          partb << setw(15) << setprecision(8) << analytic_E;
+          partb << setw(15) << setprecision(8) << analytic_M;
+          partb << setw(15) << setprecision(8) << analytic_Cv;
+          partb << setw(15) << setprecision(8) << analytic_chi << endl;
+        }
+
 
         //This code block is only for printing output
         if (print==1){
@@ -233,29 +306,34 @@ int main(int argc, char const *argv[]){
     }//End temperature loop
 
     //Writing <E(T)> , <M(T)>, <chi(T)> and <C_v(T)> to file. File is named with appropriate spin number
-    ofstream expecvalues;
-    char name[80];
-    sprintf(name,"L%d_expec_values.txt", L);
+    bool expectation = false;
+    if (expectation == true){
+      ofstream expecvalues;
+      char name[80];
+      sprintf(name,"L%d_expec_values.txt", L);
 
-    expecvalues.open(name);
-    expecvalues << setiosflags(ios::showpoint | ios::uppercase);
+      expecvalues.open(name);
+      expecvalues << setiosflags(ios::showpoint | ios::uppercase);
 
-    expecvalues << setw(15) << setprecision(8) << "Temperature";
-    expecvalues << setw(15) << setprecision(8) << "<E(T)>";
-    expecvalues << setw(15) << setprecision(8) << "<M(T)>";
-    expecvalues << setw(15) << setprecision(8) << "<C_v(T)>";
-    expecvalues << setw(15) << setprecision(8) << "<Chi(T)>";
-    expecvalues << endl;
+      expecvalues << setw(15) << setprecision(8) << "Temperature";
+      expecvalues << setw(15) << setprecision(8) << "<E(T)>";
+      expecvalues << setw(15) << setprecision(8) << "<M(T)>";
+      expecvalues << setw(15) << setprecision(8) << "<C_v(T)>";
+      expecvalues << setw(15) << setprecision(8) << "<Chi(T)>";
+      expecvalues << endl;
 
-    for(int i=0; i<N_temp; i++){
-        expecvalues << setw(15) << setprecision(8) << T_vec[i];
-        expecvalues << setw(15) << setprecision(8) << E_tot[i];
-        expecvalues << setw(15) << setprecision(8) << M_tot[i];
-        expecvalues << setw(15) << setprecision(8) << C_v_tot[i];
-        expecvalues << setw(15) << setprecision(8) << chi_tot[i];
-        expecvalues << endl;
+      for(int i=0; i<N_temp; i++){
+          expecvalues << setw(15) << setprecision(8) << T_vec[i];
+          expecvalues << setw(15) << setprecision(8) << E_tot[i];
+          expecvalues << setw(15) << setprecision(8) << M_tot[i];
+          expecvalues << setw(15) << setprecision(8) << C_v_tot[i];
+          expecvalues << setw(15) << setprecision(8) << chi_tot[i];
+          expecvalues << endl;
+      }
+      expecvalues.close();
+
     }
-    expecvalues.close();
+
 
     return 0; //End of main program
 }
