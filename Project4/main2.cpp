@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
 
     int print = atoi(argv[1]);
     //All natural units
-    int L = 40; //Dimensionality
+    int L = 100; //Dimensionality
     double J = 1.0; //Interaction strength
     double k_b = 1.0; //Boltzmann constant, natural units
 
@@ -62,10 +62,10 @@ int main(int argc, char *argv[]){
     }
 
     //Setting temperatures to loop over.
-    int N_temp = 32; //Should be dividable by number of processes, or else fuckery might occur. Should also be more enough to satisfy delta_T < 0.05.
+    int N_temp = 8; //Should be dividable by number of processes, or else fuckery might occur. Should also be more enough to satisfy delta_T < 0.05.
     int N_temp_local = (N_temp) / numprocs; //Number of points for each core.
 
-    double T_start = 2.1;
+    double T_start = 2.2;
     double T_end = 2.40;
 
     double delta_T = (T_end-T_start)/(N_temp);
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
 
     arma::vec T_vec = arma::linspace(T_start_local,T_end_local,N_temp_local);
 
-    int MC_max = 1E5;
+    int MC_max = 1E4;
 
     //Creating matrices for plotting against temperature
     arma::vec E_tot(N_temp_local,arma::fill::zeros); //E(T)
@@ -142,6 +142,10 @@ int main(int argc, char *argv[]){
         for(int mc=0; mc < MC_max; mc++){
             double accept_counter = 0;
             //Monte Carlo loop
+
+            if(my_rank ==0 && mc%(MC_max/10) == 0){
+                cout << "We are at " << mc << " iterations in MC loop" << endl;
+            }
             for(int u=0; u<L*L; u++){
                 //Loop for flipping L^2 times
 
@@ -191,7 +195,7 @@ int main(int argc, char *argv[]){
         // double C_v = (expec_E_2 - expec_E*expec_E) / (k_b*T*T); //Heat capacity
         // double chi = (expec_M_2 - M_abs*M_abs) / (k_b*T); //Susceptibility
 
-        int eq_index = 10000; //Set index where equilibrium is reached, seen from graph
+        int eq_index = 100000; //Set index where equilibrium is reached, seen from graph
 
         double expec_E_eq = 0;
         double expec_M_eq = 0;

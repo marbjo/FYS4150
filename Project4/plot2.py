@@ -3,6 +3,10 @@ import matplotlib.pyplot as plt
 import scipy.io
 import sys
 from scipy.signal import savgol_filter
+import seaborn as sns
+
+sns.set()
+sns.set_palette("dark")
 
 #Normalized by number of spins
 mat1 = np.loadtxt("L40_expec_values.txt",skiprows=1) / (40**2)
@@ -12,22 +16,11 @@ mat4 = np.loadtxt("L100_expec_values.txt",skiprows=1) / (100**2)
 
 temp = mat1[:,0]*40**2 #Temp is not normalized
 
-poly_deg = 5
-win_size = 31
+#Parameters for smoothing filter
+poly_deg = 3
+win_size =5
 
 #Smoothing with Savitzky–Golay filter
-# E_smooth = np.zeros((len(temp),4))
-# E_smooth[:,0] = savgol_filter(mat1[:,1], win_size, poly_deg)
-# E_smooth[:,1] = savgol_filter(mat2[:,1], win_size, poly_deg)
-# E_smooth[:,2] = savgol_filter(mat3[:,1], win_size, poly_deg)
-# E_smooth[:,3] = savgol_filter(mat4[:,1], win_size, poly_deg)
-#
-# M_smooth = np.zeros((len(temp),4))
-# M_smooth[:,0] = savgol_filter(mat1[:,2], win_size, poly_deg)
-# M_smooth[:,1] = savgol_filter(mat2[:,2], win_size, poly_deg)
-# M_smooth[:,2] = savgol_filter(mat3[:,2], win_size, poly_deg)
-# M_smooth[:,3] = savgol_filter(mat4[:,2], win_size, poly_deg)
-
 Cv_smooth = np.zeros((len(temp),4))
 Cv_smooth[:,0] = savgol_filter(mat1[:,3], win_size, poly_deg)
 Cv_smooth[:,1] = savgol_filter(mat2[:,3], win_size, poly_deg)
@@ -89,50 +82,49 @@ rel_err = np.abs((Tc_inf - Tc_inf_analytic ) / Tc_inf_analytic)
 print('T_c_inf from not smooth chi is: %e, which is an offset of %e from the analytical value, with an relative error of %e'  %(Tc_inf, np.abs(Tc_inf_analytic-Tc_inf), rel_err))
 
 
-plt.subplot(2,2,1)
+plt.figure()
 plt.plot(temp,mat1[:,1], label="L = 40")
 plt.plot(temp,mat2[:,1], label="L = 60")
 plt.plot(temp,mat3[:,1], label="L = 80")
 plt.plot(temp,mat4[:,1], label="L = 100")
-plt.xlabel("Temperature")
-plt.ylabel("Energy")
-plt.legend()
+plt.xlabel(r"Temperature, [$\frac{T k_B}{J}$]", fontsize=20)
+plt.ylabel(r"$\frac{<E>}{L^2}$", fontsize=20, rotation = 0, labelpad = 40)
+plt.legend(fontsize=15)
+plt.savefig('E.svg')
+plt.show()
 
-plt.subplot(2,2,2)
+
+plt.figure()
 plt.plot(temp,mat1[:,2], label="L = 40")
 plt.plot(temp,mat2[:,2], label="L = 60")
 plt.plot(temp,mat3[:,2], label="L = 80")
 plt.plot(temp,mat4[:,2], label="L = 100")
-plt.xlabel("Temperature")
-plt.ylabel("Magnetic Moment")
-plt.legend()
-
-plt.subplot(2,2,3)
-# plt.plot(temp,mat1[:,3], label="L = 40")
-# plt.plot(temp,mat2[:,3], label="L = 60")
-# plt.plot(temp,mat3[:,3], label="L = 80")
-# plt.plot(temp,mat4[:,3], label="L = 100")
-
-plt.plot(temp,Cv_smooth[:,0],label="L = 40, smoothed")
-plt.plot(temp,Cv_smooth[:,1],label="L = 60, smoothed")
-plt.plot(temp,Cv_smooth[:,2],label="L = 80, smoothed")
-plt.plot(temp,Cv_smooth[:,3],label="L = 100, smoothed")
-plt.xlabel("Temperature")
-plt.ylabel("Heat capacity")
-plt.legend()
+plt.xlabel(r"Temperature, [$\frac{T k_B}{J}$]", fontsize=20)
+plt.ylabel(r"$\frac{<|M|>}{L^2}$", fontsize=20, rotation = 0, labelpad = 40)
+plt.legend(fontsize=15)
+plt.savefig('M.svg')
+plt.show()
 
 
-plt.subplot(2,2,4)
+plt.figure()
+plt.plot(temp,Cv_smooth[:,0], label="L = 40, smoothed")
+plt.plot(temp,Cv_smooth[:,1], label="L = 60, smoothed")
+plt.plot(temp,Cv_smooth[:,2], label="L = 80, smoothed")
+plt.plot(temp,Cv_smooth[:,3], label="L = 100, smoothed")
+plt.xlabel(r"Temperature, [$\frac{T k_B}{J}$]", fontsize=20)
+plt.ylabel(r"$\frac{C_v}{L^2}$", fontsize=20, rotation = 0, labelpad = 40)
+plt.legend(fontsize=15)
+plt.savefig('Cv.svg')
+plt.show()
+
+
+plt.figure()
 plt.plot(temp,mat1[:,4], label="L = 40")
 plt.plot(temp,mat2[:,4], label="L = 60")
 plt.plot(temp,mat3[:,4], label="L = 80")
 plt.plot(temp,mat4[:,4], label="L = 100")
-# plt.plot(temp,chi_smooth[:,0],label="L = 40, smoothed")
-# plt.plot(temp,chi_smooth[:,1],label="L = 60, smoothed")
-# plt.plot(temp,chi_smooth[:,2],label="L = 80, smoothed")
-# plt.plot(temp,chi_smooth[:,3],label="L = 100, smoothed")
-plt.xlabel("Temperature")
-plt.ylabel("Susceptibility")
-plt.legend()
-
+plt.xlabel(r"Temperature, [$\frac{T k_B}{J}$]", fontsize=20)
+plt.ylabel(r"$\frac{\chi}{L^2}$", fontsize=20, rotation = 0, labelpad = 40)
+plt.legend(fontsize=15)
+plt.savefig('Chi.svg')
 plt.show()
