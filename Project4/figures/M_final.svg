@@ -29,7 +29,11 @@ z
    <g id="matplotlib.axis_1">
     <g id="xtick_1">
      <g id="line2d_1">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
       <path clip-path="url(#p4f48939972)" d="M 73.832727 307.584 
+=======
+      <path clip-path="url(#pdb396d305a)" d="M 73.832727 307.584 
+>>>>>>> Stashed changes:Project4/M.svg
 L 73.832727 41.472 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -114,8 +118,13 @@ z
      </g>
     </g>
     <g id="xtick_2">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_3">
       <path clip-path="url(#p4f48939972)" d="M 120.211948 307.584 
+=======
+     <g id="line2d_2">
+      <path clip-path="url(#pdb396d305a)" d="M 120.211948 307.584 
+>>>>>>> Stashed changes:Project4/M.svg
 L 120.211948 41.472 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -164,8 +173,13 @@ z
      </g>
     </g>
     <g id="xtick_3">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_5">
       <path clip-path="url(#p4f48939972)" d="M 166.591169 307.584 
+=======
+     <g id="line2d_3">
+      <path clip-path="url(#pdb396d305a)" d="M 166.591169 307.584 
+>>>>>>> Stashed changes:Project4/M.svg
 L 166.591169 41.472 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -186,8 +200,13 @@ L 166.591169 41.472
      </g>
     </g>
     <g id="xtick_4">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_7">
       <path clip-path="url(#p4f48939972)" d="M 212.97039 307.584 
+=======
+     <g id="line2d_4">
+      <path clip-path="url(#pdb396d305a)" d="M 212.97039 307.584 
+>>>>>>> Stashed changes:Project4/M.svg
 L 212.97039 41.472 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -221,8 +240,13 @@ z
      </g>
     </g>
     <g id="xtick_5">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_9">
       <path clip-path="url(#p4f48939972)" d="M 259.34961 307.584 
+=======
+     <g id="line2d_5">
+      <path clip-path="url(#pdb396d305a)" d="M 259.34961 307.584 
+>>>>>>> Stashed changes:Project4/M.svg
 L 259.34961 41.472 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -278,8 +302,13 @@ z
      </g>
     </g>
     <g id="xtick_6">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_11">
       <path clip-path="url(#p4f48939972)" d="M 305.728831 307.584 
+=======
+     <g id="line2d_6">
+      <path clip-path="url(#pdb396d305a)" d="M 305.728831 307.584 
+>>>>>>> Stashed changes:Project4/M.svg
 L 305.728831 41.472 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -300,8 +329,13 @@ L 305.728831 41.472
      </g>
     </g>
     <g id="xtick_7">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_13">
       <path clip-path="url(#p4f48939972)" d="M 352.108052 307.584 
+=======
+     <g id="line2d_7">
+      <path clip-path="url(#pdb396d305a)" d="M 352.108052 307.584 
+>>>>>>> Stashed changes:Project4/M.svg
 L 352.108052 41.472 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -322,8 +356,13 @@ L 352.108052 41.472
      </g>
     </g>
     <g id="xtick_8">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_15">
       <path clip-path="url(#p4f48939972)" d="M 398.487273 307.584 
+=======
+     <g id="line2d_8">
+      <path clip-path="url(#pdb396d305a)" d="M 398.487273 307.584 
+>>>>>>> Stashed changes:Project4/M.svg
 L 398.487273 41.472 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -697,8 +736,13 @@ z
    </g>
    <g id="matplotlib.axis_2">
     <g id="ytick_1">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_17">
       <path clip-path="url(#p4f48939972)" d="M 57.6 303.968476 
+=======
+     <g id="line2d_9">
+      <path clip-path="url(#pdb396d305a)" d="M 57.6 303.968476 
+>>>>>>> Stashed changes:Project4/M.svg
 L 414.72 303.968476 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -737,8 +781,13 @@ z
      </g>
     </g>
     <g id="ytick_2">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_19">
       <path clip-path="url(#p4f48939972)" d="M 57.6 267.443038 
+=======
+     <g id="line2d_10">
+      <path clip-path="url(#pdb396d305a)" d="M 57.6 267.443038 
+>>>>>>> Stashed changes:Project4/M.svg
 L 414.72 267.443038 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -757,8 +806,13 @@ L 414.72 267.443038
      </g>
     </g>
     <g id="ytick_3">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_21">
       <path clip-path="url(#p4f48939972)" d="M 57.6 230.917599 
+=======
+     <g id="line2d_11">
+      <path clip-path="url(#pdb396d305a)" d="M 57.6 230.917599 
+>>>>>>> Stashed changes:Project4/M.svg
 L 414.72 230.917599 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -777,8 +831,13 @@ L 414.72 230.917599
      </g>
     </g>
     <g id="ytick_4">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_23">
       <path clip-path="url(#p4f48939972)" d="M 57.6 194.39216 
+=======
+     <g id="line2d_12">
+      <path clip-path="url(#pdb396d305a)" d="M 57.6 194.39216 
+>>>>>>> Stashed changes:Project4/M.svg
 L 414.72 194.39216 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -820,8 +879,13 @@ z
      </g>
     </g>
     <g id="ytick_5">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_25">
       <path clip-path="url(#p4f48939972)" d="M 57.6 157.866721 
+=======
+     <g id="line2d_13">
+      <path clip-path="url(#pdb396d305a)" d="M 57.6 157.866721 
+>>>>>>> Stashed changes:Project4/M.svg
 L 414.72 157.866721 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -840,8 +904,13 @@ L 414.72 157.866721
      </g>
     </g>
     <g id="ytick_6">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_27">
       <path clip-path="url(#p4f48939972)" d="M 57.6 121.341283 
+=======
+     <g id="line2d_14">
+      <path clip-path="url(#pdb396d305a)" d="M 57.6 121.341283 
+>>>>>>> Stashed changes:Project4/M.svg
 L 414.72 121.341283 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -893,8 +962,13 @@ z
      </g>
     </g>
     <g id="ytick_7">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_29">
       <path clip-path="url(#p4f48939972)" d="M 57.6 84.815844 
+=======
+     <g id="line2d_15">
+      <path clip-path="url(#pdb396d305a)" d="M 57.6 84.815844 
+>>>>>>> Stashed changes:Project4/M.svg
 L 414.72 84.815844 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -913,8 +987,13 @@ L 414.72 84.815844
      </g>
     </g>
     <g id="ytick_8">
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
      <g id="line2d_31">
       <path clip-path="url(#p4f48939972)" d="M 57.6 48.290405 
+=======
+     <g id="line2d_16">
+      <path clip-path="url(#pdb396d305a)" d="M 57.6 48.290405 
+>>>>>>> Stashed changes:Project4/M.svg
 L 414.72 48.290405 
 " style="fill:none;stroke:#ffffff;stroke-linecap:round;stroke-width:0.8;"/>
      </g>
@@ -1064,8 +1143,13 @@ z
      </g>
     </g>
    </g>
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
    <g id="line2d_33">
     <path clip-path="url(#p4f48939972)" d="M 73.832727 53.740229 
+=======
+   <g id="line2d_17">
+    <path clip-path="url(#pdb396d305a)" d="M 73.832727 53.740229 
+>>>>>>> Stashed changes:Project4/M.svg
 L 120.211948 67.455805 
 L 166.591169 87.553015 
 L 212.97039 113.96379 
@@ -1075,8 +1159,13 @@ L 352.108052 207.884342
 L 398.487273 227.334871 
 " style="fill:none;stroke:#1f77b4;stroke-linecap:round;stroke-width:1.5;"/>
    </g>
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
    <g id="line2d_34">
     <path clip-path="url(#p4f48939972)" d="M 73.832727 53.73507 
+=======
+   <g id="line2d_18">
+    <path clip-path="url(#pdb396d305a)" d="M 73.832727 53.73507 
+>>>>>>> Stashed changes:Project4/M.svg
 L 120.211948 68.04321 
 L 166.591169 91.383595 
 L 212.97039 132.342704 
@@ -1086,8 +1175,13 @@ L 352.108052 249.176914
 L 398.487273 264.734946 
 " style="fill:none;stroke:#ff7f0e;stroke-linecap:round;stroke-width:1.5;"/>
    </g>
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
    <g id="line2d_35">
     <path clip-path="url(#p4f48939972)" d="M 73.832727 53.568 
+=======
+   <g id="line2d_19">
+    <path clip-path="url(#pdb396d305a)" d="M 73.832727 53.568 
+>>>>>>> Stashed changes:Project4/M.svg
 L 120.211948 68.448127 
 L 166.591169 92.325959 
 L 212.97039 145.462888 
@@ -1097,8 +1191,13 @@ L 352.108052 271.998273
 L 398.487273 286.034304 
 " style="fill:none;stroke:#2ca02c;stroke-linecap:round;stroke-width:1.5;"/>
    </g>
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
    <g id="line2d_36">
     <path clip-path="url(#p4f48939972)" d="M 73.832727 53.862953 
+=======
+   <g id="line2d_20">
+    <path clip-path="url(#pdb396d305a)" d="M 73.832727 53.862953 
+>>>>>>> Stashed changes:Project4/M.svg
 L 120.211948 68.7118 
 L 166.591169 95.536466 
 L 212.97039 154.343689 
@@ -1244,7 +1343,11 @@ L 357.255938 98.604813
   </g>
  </g>
  <defs>
+<<<<<<< Updated upstream:Project4/figures/M_final.svg
   <clipPath id="p4f48939972">
+=======
+  <clipPath id="pdb396d305a">
+>>>>>>> Stashed changes:Project4/M.svg
    <rect height="266.112" width="357.12" x="57.6" y="41.472"/>
   </clipPath>
  </defs>
