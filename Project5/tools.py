@@ -178,30 +178,26 @@ if __name__ == '__main__':
     #a.saveTransVar()
 
     a = FinanceExperiment(agents = 1000, starting_amt = 1000, MCsteps = 1e3, transactions = 1e6, lam = 0.25, alp = 2.0, gam = 0.0,
-                          filename = 'parte_1000_25_20_00_')
+                          filename = 'partd_1000_25_20_00_')
     a.montecarlo()
     a.error_calc()
     a.saveBinVals()
     a.saveBinParams()
-    a = FinanceExperiment(agents = 1000, starting_amt = 1000, MCsteps = 1e3, transactions = 1e6, lam = 0.25, alp = 2.0, gam = 1.0,
-                          filename = 'parte_1000_25_20_10_')
+    a = FinanceExperiment(agents = 1000, starting_amt = 1000, MCsteps = 1e4, transactions = 1e5, lam = 0.25, alp = 1.5, gam = 0.0,
+                          filename = 'partd_1000_25_15_00_')
     a.montecarlo()
     a.error_calc()
     a.saveBinVals()
-    a = FinanceExperiment(agents = 1000, starting_amt = 1000, MCsteps = 1e3, transactions = 1e6, lam = 0.25, alp = 2.0, gam = 2.0,
-                          filename = 'parte_1000_25_20_20_')
+    a = FinanceExperiment(agents = 1000, starting_amt = 1000, MCsteps = 1e4, transactions = 1e5, lam = 0.25, alp = 1.0, gam = 0.0,
+                          filename = 'partd_1000_25_10_00_')
     a.montecarlo()
     a.error_calc()
     a.saveBinVals()
-    a = FinanceExperiment(agents = 1000, starting_amt = 1000, MCsteps = 1e3, transactions = 1e6, lam = 0.25, alp = 2.0, gam = 3.0,
-                          filename = 'parte_1000_25_20_30_')
+    a = FinanceExperiment(agents = 1000, starting_amt = 1000, MCsteps = 1e4, transactions = 1e5, lam = 0.25, alp = 0.5, gam = 0.0,
+                          filename = 'partd_1000_25_00_00_')
     a.montecarlo()
     a.error_calc()
     a.saveBinVals()
-    a = FinanceExperiment(agents = 1000, starting_amt = 1000, MCsteps = 1e3, transactions = 1e6, lam = 0.25, alp = 2.0, gam = 4.0,
-                          filename = 'parte_1000_25_20_40_')
-    a.montecarlo()
-    a.error_calc()
-    a.saveBinVals()
+
 
    
